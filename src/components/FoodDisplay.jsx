@@ -14,14 +14,14 @@ import { useNavigation } from '@react-navigation/native';
 import FoodItem from './FoodItem';
 import DealItem from './DealItem';
 import { ThemeContext } from '../context/ThemeContext';
+import { ShoppingCart } from 'lucide-react-native';
 
 const FoodDisplay = ({ category }) => {
-  const { cartItems = {}, menuData = {}, orderDetails: od, loading, addToCart } = useContext(StoreContext);
+  const { cartItems = {}, menuData = {}, loading, addToCart } = useContext(StoreContext);
   const { categories: rawCategories = [], deals = [], branch } = menuData;
-  const categories = deals.length > 0 
+  const categories = deals.length > 0
     ? [{ id: 'deals-cat', name: 'Deals', products: deals.map(d => ({ ...d, is_deal: true })) }, ...rawCategories]
     : rawCategories;
-  const orderDetails = od || {};
   const navigation = useNavigation();
   const { theme } = useContext(ThemeContext);
   const styles = getStyles(theme);
@@ -35,15 +35,10 @@ const FoodDisplay = ({ category }) => {
     }
   }, [categories, selectedCategory]);
 
-  // layout math
-  const { width } = useWindowDimensions();
-  const numCols = width > 900 ? 4 : width > 600 ? 3 : 2;
-  const itemWidth = (width - 20 - (numCols - 1) * 10) / numCols;
-
   // cart totals
   const values = Object.values(cartItems);
   const itemCount = values.reduce((sum, i) => sum + i.quantity, 0);
-  const totalAmount = values.reduce((sum, i) => sum + i.price * i.quantity, 0).toFixed(2);
+  const totalAmount = values.reduce((sum, i) => sum + i.price * i.quantity, 0).toFixed(0);
 
   // scroll refs
   const scrollViewRef = useRef(null);
@@ -52,7 +47,7 @@ const FoodDisplay = ({ category }) => {
   const scrollTo = (catName) => {
     setSelectedCategory(catName);
     const y = offsets.current[catName.toLowerCase()] || 0;
-    scrollViewRef.current.scrollTo({ x: 0, y, animated: true });
+    scrollViewRef.current?.scrollTo({ x: 0, y, animated: true });
   };
 
   const onSectionLayout = (e, catName) => {
@@ -70,8 +65,8 @@ const FoodDisplay = ({ category }) => {
   if (categories.length === 0) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Text style={{ fontSize: 16, color: theme.colors.text, opacity: 0.6, textAlign: 'center' }}>
-          No menu available. Please ensure a valid branch is assigned to your account.
+        <Text style={{ fontSize: 16, color: theme.colors.textSecondary || theme.colors.text, textAlign: 'center' }}>
+          No menu available. Please select a valid location.
         </Text>
       </View>
     );
@@ -79,22 +74,22 @@ const FoodDisplay = ({ category }) => {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Category Navbar */}
-      <View style={{ height: 60 }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryNavbar}>
+      {/* Category Tabs */}
+      <View style={styles.categoryBar}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
           {categories.map(cat => (
             <TouchableOpacity
               key={cat.id}
               style={[
-                styles.categoryButton,
-                selectedCategory === cat.name && styles.activeCategoryButton,
+                styles.categoryPill,
+                selectedCategory === cat.name && styles.categoryPillActive,
               ]}
               onPress={() => scrollTo(cat.name)}
             >
               <Text
                 style={[
-                  styles.categoryButtonText,
-                  selectedCategory === cat.name && { color: '#fff' },
+                  styles.categoryPillText,
+                  selectedCategory === cat.name && styles.categoryPillTextActive,
                 ]}
               >
                 {cat.name}
@@ -108,7 +103,7 @@ const FoodDisplay = ({ category }) => {
       <ScrollView
         ref={scrollViewRef}
         style={styles.mainContent}
-        contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: itemCount > 0 ? 100 : 40 }}
       >
         {categories.map(cat => (
           <View
@@ -116,92 +111,86 @@ const FoodDisplay = ({ category }) => {
             onLayout={e => onSectionLayout(e, cat.name)}
             style={styles.section}
           >
-            <Text style={styles.categoryheading}>{cat.name}</Text>
-            <View style={styles.row}>
-              {cat.products && cat.products.map(item => (
-                <View key={item.id} style={[styles.itemContainer, { width: itemWidth }]}>
-                  {item.is_deal 
-                    ? <DealItem {...item} onAddToCart={() => addToCart(item, true)} />
-                    : <FoodItem {...item} categoryName={cat.name} onAddToCart={() => addToCart(item, false)} />
-                  }
-                </View>
-              ))}
-            </View>
+            <Text style={styles.sectionHeading}>{cat.name}</Text>
+
+            {cat.products && cat.products.map(item => (
+              <View key={item.id}>
+                {item.is_deal
+                  ? <DealItem {...item} onAddToCart={() => addToCart(item, true)} />
+                  : <FoodItem {...item} categoryName={cat.name} onAddToCart={() => addToCart(item, false)} />
+                }
+              </View>
+            ))}
           </View>
         ))}
       </ScrollView>
 
       {/* Cart Footer */}
       {itemCount > 0 && (
-        <View style={styles.cartBar}>
-          <Text style={styles.cartText}>
-            {itemCount} item{itemCount > 1 ? 's' : ''} • Rs {totalAmount}
-          </Text>
-          <TouchableOpacity
-            style={styles.cartButton}
-            onPress={() =>
-              navigation.navigate('Cart')
-            }
-          >
-            <Text style={styles.cartButtonText}>View Cart</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={styles.cartBar}
+          onPress={() => navigation.navigate('Cart')}
+          activeOpacity={0.9}
+        >
+          <View style={styles.cartLeft}>
+            <View style={styles.cartBadge}>
+              <ShoppingCart size={18} color="#fff" />
+              <View style={styles.cartCount}>
+                <Text style={styles.cartCountText}>{itemCount}</Text>
+              </View>
+            </View>
+            <Text style={styles.cartText}>View Cart</Text>
+          </View>
+          <Text style={styles.cartAmount}>Rs. {totalAmount}</Text>
+        </TouchableOpacity>
       )}
     </View>
   );
 };
+
 const getStyles = (theme) =>
   StyleSheet.create({
-    categoryNavbar: {
-      flexGrow: 0,
-      paddingVertical: 10,
+    categoryBar: {
       backgroundColor: theme.colors.background,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
     },
-    categoryButton: {
-      marginRight: 12,
+    categoryScroll: {
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      gap: 8,
+    },
+    categoryPill: {
       paddingVertical: 8,
-      paddingHorizontal: 16,
+      paddingHorizontal: 18,
       borderRadius: 20,
-      borderWidth: 1,
-      borderColor: '#bbb',
       backgroundColor: 'transparent',
-      justifyContent: 'center',
-      alignItems: 'center',
     },
-    activeCategoryButton: {
+    categoryPillActive: {
       backgroundColor: theme.colors.primary,
-      borderColor: theme.colors.primary,
     },
-    categoryButtonText: {
+    categoryPillText: {
       fontSize: 14,
       fontWeight: '600',
-      color: theme.colors.text,
+      color: theme.colors.textSecondary || theme.colors.text,
+    },
+    categoryPillTextActive: {
+      color: '#fff',
+      fontWeight: '700',
     },
     mainContent: {
-      marginTop: 20,
-      marginBottom: 60,
-    },
-    row: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-    },
-    itemContainer: {
-      marginBottom: 10,
+      flex: 1,
     },
     section: {
-      marginTop: 15,
+      paddingHorizontal: 16,
+      marginTop: 8,
     },
-    categoryheading: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      marginVertical: 10,
-      textAlign: 'center',
-      backgroundColor: theme.colors.primary,
-      borderRadius: 12,
-      color: '#FFFFFF',
-      paddingVertical: 8,
-      elevation: 3,
+    sectionHeading: {
+      fontSize: 22,
+      fontWeight: '800',
+      color: theme.colors.text,
+      marginTop: 16,
+      marginBottom: 12,
     },
     cartBar: {
       position: 'absolute',
@@ -212,24 +201,46 @@ const getStyles = (theme) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      padding: 14,
-      elevation: 8,
+      paddingVertical: 14,
+      paddingHorizontal: 20,
+      marginHorizontal: 16,
+      marginBottom: 16,
+      borderRadius: 14,
+      ...theme.shadows?.large,
+    },
+    cartLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    cartBadge: {
+      position: 'relative',
+    },
+    cartCount: {
+      position: 'absolute',
+      top: -8,
+      right: -10,
+      backgroundColor: '#fff',
+      borderRadius: 10,
+      width: 18,
+      height: 18,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    cartCountText: {
+      color: theme.colors.primary,
+      fontSize: 11,
+      fontWeight: '800',
     },
     cartText: {
       color: '#fff',
       fontSize: 16,
-      fontWeight: 'bold',
+      fontWeight: '700',
     },
-    cartButton: {
-      backgroundColor: theme.colors.background,
-      paddingVertical: 8,
-      paddingHorizontal: 20,
-      borderRadius: 6,
-    },
-    cartButtonText: {
-      color: theme.colors.text,
+    cartAmount: {
+      color: '#fff',
       fontSize: 16,
-      fontWeight: '600',
+      fontWeight: '800',
     },
   });
 

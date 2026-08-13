@@ -25,14 +25,14 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
       <SafeAreaProvider>
-        {/* paint only the top notch/status‐bar area */}
+        {/* paint only the top notch/status-bar area */}
         <SafeAreaView
           edges={['top']}
-          style={{ backgroundColor: isDark ? '#000' : '#fff' }}
+          style={{ backgroundColor: '#D32F2F' }}
         />
 
-        {/* Expo status bar: white icons on dark, dark icons on light */}
-        <ExpoStatusBar style={isDark ? 'light' : 'dark'} translucent />
+        {/* White status bar icons for red header */}
+        <ExpoStatusBar style="light" translucent />
 
         <StoreContextProvider>
           <Navigation onReady={() => SplashScreen.hideAsync()} />

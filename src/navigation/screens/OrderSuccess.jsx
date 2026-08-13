@@ -55,19 +55,15 @@ export default function OrderSuccess() {
       <TouchableOpacity
         style={styles.button}
         onPress={() => {
-          // Clear previous order details (like orderType, table_id)
-          if (updateOrderDetails) {
-             updateOrderDetails(null);
-          }
           navigation.dispatch(
             CommonActions.reset({
               index: 0,
-              routes: [{ name: 'Profile' }],
+              routes: [{ name: 'HomeTabs' }],
             })
           )
         }}
       >
-        <Text style={styles.buttonText}>Start New Order</Text>
+        <Text style={styles.buttonText}>Back to Menu</Text>
       </TouchableOpacity>
       <Toast />
     </View>

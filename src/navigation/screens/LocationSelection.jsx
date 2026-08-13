@@ -4,37 +4,47 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
   ActivityIndicator,
   Animated,
+  ScrollView,
+  Platform,
+  Image,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { StoreContext } from '../../context/StoreContext';
 import { ThemeContext } from '../../context/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
-import { ChevronRight, MapPin, Building2 } from 'lucide-react-native';
+import { MapPin, ChevronDown, CheckCircle } from 'lucide-react-native';
 
 export function LocationSelection() {
   const { theme } = useContext(ThemeContext);
-  const { tradeAreas, handleSelectSubRegion, loading, selectedBranch } = useContext(StoreContext);
+  const { tradeAreas, handleSelectSubRegion, loading, selectedBranch, updateOrderDetails } = useContext(StoreContext);
   const navigation = useNavigation();
 
-  const [selectedArea, setSelectedArea] = useState(null);
+  const [orderType, setOrderType] = useState(null);
+  const [selectedCityIdx, setSelectedCityIdx] = useState(null);
+  const [selectedAreaIdx, setSelectedAreaIdx] = useState(null);
   const [fadeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 500,
+      duration: 400,
       useNativeDriver: true,
     }).start();
-  }, [selectedArea]);
+  }, []);
 
-  const handleAreaSelect = (area) => {
-    setSelectedArea(area);
-  };
+  const cities = tradeAreas || [];
+  const selectedCity = selectedCityIdx !== null ? cities[selectedCityIdx] : null;
+  const areas = selectedCity?.sub_regions || [];
+  const selectedArea = selectedAreaIdx !== null ? areas[selectedAreaIdx] : null;
 
-  const handleSubRegionSelect = async (subRegion) => {
-    await handleSelectSubRegion(subRegion);
+  const handleConfirm = async () => {
+    if (!selectedArea || !orderType) return;
+    if (updateOrderDetails) {
+      updateOrderDetails({ orderType });
+    }
+    await handleSelectSubRegion(selectedArea);
     navigation.reset({
       index: 0,
       routes: [{ name: 'HomeTabs' }],
@@ -43,85 +53,172 @@ export function LocationSelection() {
 
   const styles = getStyles(theme);
 
+  // Step 1: Order Type Selection
+  if (!orderType) {
+    return (
+      <View style={styles.container}>
+        {/* Logo Section */}
+        <View style={styles.logoSection}>
+          <Image
+            source={require('../../assets/Kruncheese.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
+
+        {/* Bottom Card */}
+        <View style={styles.welcomeCard}>
+          <Text style={styles.welcomeTitle}>Welcome to Kruncheese 👋</Text>
+          <Text style={styles.welcomeSubtitle}>Please select your order type to continue</Text>
+
+          <TouchableOpacity
+            style={styles.orderTypeBtn}
+            onPress={() => setOrderType('Delivery')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.orderTypeIconWrap}>
+              <Image source={require('../../assets/Delivery.png')} style={styles.orderTypeIcon} />
+            </View>
+            <Text style={styles.orderTypeBtnText}>Delivery</Text>
+            <Text style={styles.orderTypeArrow}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.orderTypeBtn}
+            onPress={() => setOrderType('Pick-Up')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.orderTypeIconWrap}>
+              <Image source={require('../../assets/Pickup.png')} style={styles.orderTypeIcon} />
+            </View>
+            <Text style={styles.orderTypeBtnText}>Pick-Up</Text>
+            <Text style={styles.orderTypeArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // Step 2: Location Selection
   if (loading && !tradeAreas.length) {
     return (
       <View style={styles.loaderContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Text style={styles.loaderText}>Loading locations...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container2}>
+      {/* Red Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>
-          {selectedArea ? `Select Sub-region in ${selectedArea.name}` : 'Select your Region'}
-        </Text>
-        <Text style={styles.subtitle}>
-          {selectedArea 
-            ? 'Choose your specific area to find the nearest branch' 
-            : 'Find your city to see available stores'}
-        </Text>
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => setOrderType(null)}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Text style={styles.backArrow}>‹</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Select Location</Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      <Animated.View style={[styles.listContainer, { opacity: fadeAnim }]}>
-        {!selectedArea ? (
-          <FlatList
-            data={tradeAreas}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.itemCard}
-                onPress={() => handleAreaSelect(item)}
-              >
-                <View style={styles.itemIconContainer}>
-                  <MapPin size={24} color={theme.colors.primary} />
-                </View>
-                <View style={styles.itemTextContainer}>
-                  <Text style={styles.itemName}>{item.name}</Text>
-                  <Text style={styles.itemSubtext}>{item.sub_regions.length} Sub-regions</Text>
-                </View>
-                <ChevronRight size={20} color={theme.colors.text} opacity={0.3} />
-              </TouchableOpacity>
-            )}
-            contentContainerStyle={styles.listContent}
-          />
-        ) : (
-          <View style={{ flex: 1 }}>
-            <TouchableOpacity 
-              style={styles.backButton} 
-              onPress={() => setSelectedArea(null)}
+      {/* Order type badge */}
+      <View style={styles.orderBadge}>
+        <Text style={styles.orderBadgeText}>
+          {orderType === 'Delivery' ? '🛵' : '🛍️'} {orderType}
+        </Text>
+        <TouchableOpacity onPress={() => setOrderType(null)}>
+          <Text style={styles.changeText}>Change</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.content} contentContainerStyle={styles.contentInner}>
+        {/* Location Icon */}
+        <View style={styles.iconCircle}>
+          <MapPin size={32} color={theme.colors.primary} />
+        </View>
+
+        <Text style={styles.title}>Please select your location</Text>
+        <Text style={styles.subtitle}>Choose your city and area to find the nearest branch</Text>
+
+        {/* City / Region Picker */}
+        <View style={styles.pickerSection}>
+          <Text style={styles.pickerLabel}>City / Region</Text>
+          <View style={styles.pickerWrapper}>
+            <Picker
+              selectedValue={selectedCityIdx}
+              onValueChange={(val) => {
+                setSelectedCityIdx(val);
+                setSelectedAreaIdx(null);
+              }}
+              style={styles.picker}
+              itemStyle={styles.pickerItem}
             >
-              <Text style={styles.backButtonText}>← Change Region</Text>
-            </TouchableOpacity>
-            <FlatList
-              data={selectedArea.sub_regions}
-              keyExtractor={(item) => item.id.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.itemCard}
-                  onPress={() => handleSubRegionSelect(item)}
-                >
-                  <View style={[styles.itemIconContainer, { backgroundColor: '#fef2f2' }]}>
-                    <Building2 size={24} color={theme.colors.primary} />
-                  </View>
-                  <View style={styles.itemTextContainer}>
-                    <Text style={styles.itemName}>{item.name}</Text>
-                    <Text style={styles.itemSubtext}>Tap to resolve branch</Text>
-                  </View>
-                  <ChevronRight size={20} color={theme.colors.text} opacity={0.3} />
-                </TouchableOpacity>
-              )}
-              contentContainerStyle={styles.listContent}
-            />
+              <Picker.Item label="Select City" value={null} color={theme.colors.textMuted || '#999'} />
+              {cities.map((city, idx) => (
+                <Picker.Item key={city.id} label={city.name} value={idx} color={theme.colors.text} />
+              ))}
+            </Picker>
+          </View>
+        </View>
+
+        {/* Area / Sub-Region Picker */}
+        {selectedCity && (
+          <Animated.View style={[styles.pickerSection, { opacity: fadeAnim }]}>
+            <Text style={styles.pickerLabel}>Area / Sub-Region</Text>
+            <View style={styles.pickerWrapper}>
+              <Picker
+                selectedValue={selectedAreaIdx}
+                onValueChange={(val) => setSelectedAreaIdx(val)}
+                style={styles.picker}
+                itemStyle={styles.pickerItem}
+              >
+                <Picker.Item label="Select Area" value={null} color={theme.colors.textMuted || '#999'} />
+                {areas.map((area, idx) => (
+                  <Picker.Item key={area.id} label={area.name} value={idx} color={theme.colors.text} />
+                ))}
+              </Picker>
+            </View>
+          </Animated.View>
+        )}
+
+        {/* Branch Resolved Info */}
+        {selectedBranch && selectedArea && !loading && (
+          <View style={styles.branchCard}>
+            <CheckCircle size={20} color={theme.colors.success || '#4CAF50'} />
+            <View style={styles.branchInfo}>
+              <Text style={styles.branchLabel}>Nearest Branch</Text>
+              <Text style={styles.branchNameText}>{selectedBranch.name}</Text>
+            </View>
           </View>
         )}
-      </Animated.View>
+      </ScrollView>
 
-      {loading && (
+      {/* Confirm Button */}
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[
+            styles.confirmBtn,
+            (!selectedArea || loading) && styles.confirmBtnDisabled,
+          ]}
+          onPress={handleConfirm}
+          disabled={!selectedArea || loading}
+          activeOpacity={0.8}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.confirmBtnText}>Confirm Location</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {loading && selectedArea && (
         <View style={styles.overlayLoader}>
           <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.loaderText}>Resolving Branch...</Text>
+          <Text style={styles.overlayText}>Resolving Branch...</Text>
         </View>
       )}
     </View>
@@ -129,88 +226,246 @@ export function LocationSelection() {
 }
 
 const getStyles = (theme) => StyleSheet.create({
+  // ——— Step 1: Order Type ———
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-    paddingTop: 60,
+  },
+  logoSection: {
+    flex: 0.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background,
+  },
+  logo: {
+    width: 220,
+    height: 90,
+  },
+  welcomeCard: {
+    flex: 0.5,
+    backgroundColor: theme.colors.card,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    ...theme.shadows?.large,
+  },
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: theme.colors.text,
+    marginBottom: 6,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: theme.colors.textSecondary || theme.colors.muted,
+    marginBottom: 24,
+  },
+  orderTypeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface || '#F8F8F8',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  orderTypeIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: theme.colors.primaryLight || '#FFCDD2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  orderTypeIcon: {
+    width: 28,
+    height: 28,
+    tintColor: theme.colors.primary,
+  },
+  orderTypeBtnText: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '700',
+    color: theme.colors.text,
+  },
+  orderTypeArrow: {
+    fontSize: 28,
+    color: theme.colors.textMuted || '#999',
+    fontWeight: '300',
+  },
+
+  // ——— Step 2: Location ———
+  container2: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
   },
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: theme.colors.background,
+    gap: 12,
+  },
+  loaderText: {
+    color: theme.colors.textSecondary || theme.colors.muted,
+    fontSize: 15,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.primary,
+    paddingTop: Platform.OS === 'ios' ? 56 : 40,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backArrow: {
+    color: '#fff',
+    fontSize: 32,
+    fontWeight: '300',
+    marginTop: -4,
+  },
+  headerTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  orderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 24,
-    marginBottom: 24,
+    paddingVertical: 12,
+    backgroundColor: theme.colors.surface || '#F8F8F8',
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  orderBadgeText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: theme.colors.text,
+  },
+  changeText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: theme.colors.primary,
+  },
+  content: {
+    flex: 1,
+  },
+  contentInner: {
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 120,
+  },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: theme.colors.primaryLight || '#FFCDD2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   title: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: '800',
     color: theme.colors.text,
+    textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
+    fontSize: 14,
+    color: theme.colors.textSecondary || theme.colors.muted,
+    textAlign: 'center',
+    marginBottom: 28,
+    lineHeight: 20,
+  },
+  pickerSection: {
+    marginBottom: 20,
+  },
+  pickerLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.text,
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  pickerWrapper: {
+    borderWidth: 1.5,
+    borderColor: theme.colors.borderMedium || theme.colors.border,
+    borderRadius: 14,
+    backgroundColor: theme.colors.surface || theme.colors.card,
+    overflow: 'hidden',
+  },
+  picker: {
+    height: Platform.OS === 'ios' ? 160 : 52,
+    color: theme.colors.text,
+  },
+  pickerItem: {
     fontSize: 16,
     color: theme.colors.text,
-    opacity: 0.6,
-    fontWeight: '500',
   },
-  listContainer: {
-    flex: 1,
-  },
-  listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  itemCard: {
+  branchCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.card,
-    borderRadius: 16,
+    backgroundColor: theme.colors.surface || '#F8F8F8',
+    borderRadius: 14,
     padding: 16,
-    marginBottom: 12,
+    marginTop: 8,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    borderColor: theme.colors.success || '#4CAF50',
+    gap: 12,
   },
-  itemIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: theme.colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  itemTextContainer: {
+  branchInfo: {
     flex: 1,
   },
-  itemName: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: theme.colors.text,
-    marginBottom: 2,
-  },
-  itemSubtext: {
-    fontSize: 13,
-    color: theme.colors.text,
-    opacity: 0.4,
+  branchLabel: {
+    fontSize: 12,
+    color: theme.colors.textSecondary || theme.colors.muted,
     fontWeight: '500',
   },
-  backButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    marginBottom: 8,
-  },
-  backButtonText: {
-    color: theme.colors.primary,
+  branchNameText: {
+    fontSize: 16,
     fontWeight: '700',
-    fontSize: 15,
+    color: theme.colors.text,
+    marginTop: 2,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 36 : 20,
+    backgroundColor: theme.colors.background,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+  confirmBtn: {
+    height: 54,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  confirmBtnDisabled: {
+    opacity: 0.5,
+  },
+  confirmBtnText: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '700',
   },
   overlayLoader: {
     ...StyleSheet.absoluteFillObject,
@@ -219,10 +474,10 @@ const getStyles = (theme) => StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
   },
-  loaderText: {
+  overlayText: {
     color: '#fff',
     marginTop: 12,
     fontWeight: '700',
     fontSize: 16,
-  }
+  },
 });

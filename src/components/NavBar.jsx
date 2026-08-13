@@ -1,46 +1,53 @@
 import React, { useContext } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { StoreContext } from '../context/StoreContext';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { ThemeContext } from '../context/ThemeContext';
+import { ChevronDown, ShoppingBag } from 'lucide-react-native';
 
 export const CustomNavBar = () => {
   const navigation = useNavigation();
-  const route = useRoute();
   const ctx = useContext(StoreContext) || {};
-  const orderType = ctx.orderDetails?.orderType;
-  const { selectedBranch } = ctx;
+  const { selectedBranch, orderDetails } = ctx;
   const { theme } = useContext(ThemeContext);
-  const takeawayIcon = require('../assets/Pickup.png');
-  const dineInIcon = require('../assets/DineIn.png');
 
-  // read selectedTable and branch from current route params or context
+
   return (
-    <View style={[styles.navBar, { backgroundColor: theme.colors.background }]}>
-      {/* Left menu */}
-      <TouchableOpacity onPress={() => navigation.openDrawer()}>
-        <Image source={require('../assets/list.png')} style={styles.menuIcon} />
+    <View style={styles.navBar}>
+      {/* Left: Hamburger Menu */}
+      <TouchableOpacity
+        onPress={() => navigation.openDrawer()}
+        style={styles.menuBtn}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <View style={styles.hamburgerLine} />
+        <View style={[styles.hamburgerLine, { width: 20 }]} />
+        <View style={styles.hamburgerLine} />
       </TouchableOpacity>
 
-      {/* Center: Brand & Branch Info */}
-      <View style={styles.centerWrap}>
-        <Image source={require('../assets/Kruncheese.png')} style={styles.logo} />
-        {selectedBranch && (
-          <Text style={[styles.branchName, { color: theme.colors.primary }]}>
-            {selectedBranch.name.toUpperCase()}
-          </Text>
-        )}
-      </View>
+      {/* Center: Branch Info */}
+      <TouchableOpacity
+        style={styles.centerWrap}
+        onPress={() => navigation.navigate('LocationSelection')}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.deliverLabel}>
+          {orderDetails?.orderType === 'Dine In' ? 'Dine In at' : 'Branch'}
+          {' '}
+          <ChevronDown size={12} color="rgba(255,255,255,0.8)" />
+        </Text>
+        <Text style={styles.branchName} numberOfLines={1}>
+          {selectedBranch?.name || 'Select Location'}
+        </Text>
+      </TouchableOpacity>
 
-      {/* Right side: order-type badge */}
-      <View style={styles.rightWrap}>
-        <TouchableOpacity
-          style={styles.orderTypeBadge}
-          onPress={() => navigation.navigate('Profile')}
-        >
-          <Image source={dineInIcon} style={styles.typeIcon} />
-        </TouchableOpacity>
-      </View>
+      {/* Right: Order Type Icon */}
+      <TouchableOpacity
+        style={styles.rightBtn}
+        onPress={() => navigation.navigate('Cart')}
+      >
+        <ShoppingBag size={20} color="#fff" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -48,41 +55,46 @@ export const CustomNavBar = () => {
 const styles = StyleSheet.create({
   navBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    height: 100,
+    backgroundColor: '#D32F2F',
+    paddingTop: Platform.OS === 'ios' ? 50 : 36,
+    paddingBottom: 14,
     paddingHorizontal: 16,
-    paddingTop: 45,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
-  menuIcon: { width: 28, height: 28 },
+  menuBtn: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    gap: 5,
+  },
+  hamburgerLine: {
+    width: 24,
+    height: 2.5,
+    backgroundColor: '#fff',
+    borderRadius: 2,
+  },
   centerWrap: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginHorizontal: 12,
   },
-  logo: { width: 120, height: 30, resizeMode: 'contain' },
+  deliverLabel: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 12,
+    fontWeight: '500',
+  },
   branchName: {
-    fontSize: 10,
-    fontWeight: '800',
-    marginTop: 2,
-    letterSpacing: 1.5,
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
   },
-  rightWrap: {
-    flexDirection: 'row',
+  rightBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  orderTypeBadge: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    padding: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.2)',
-  },
-  typeIcon: { width: 24, height: 24 },
-  typeIconSmall: { width: 16, height: 16, marginHorizontal: 1 },
-  bothIcons: { flexDirection: 'row', alignItems: 'center' },
 });
 
 export default CustomNavBar;

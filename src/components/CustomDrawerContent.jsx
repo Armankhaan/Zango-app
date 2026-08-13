@@ -9,30 +9,22 @@ import {
   Image,
   Linking,
   Switch,
+  Platform,
 } from 'react-native';
 import { DrawerActions } from '@react-navigation/native';
 import { StoreContext } from '../context/StoreContext';
 import { ThemeContext } from '../context/ThemeContext';
-import Toast from 'react-native-toast-message';
+import { MapPin, ShoppingCart, UtensilsCrossed, Phone, Sun, Moon } from 'lucide-react-native';
 
 export function CustomDrawerContent({ navigation, ...props }) {
-  const { username, customerInfo, selectedBranch, clearCustomerInfo, orderDetails } = useContext(StoreContext);
+  const { selectedBranch, orderDetails } = useContext(StoreContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
 
-  const handleLogout = () => {
-    clearCustomerInfo();
-    navigation.dispatch(DrawerActions.closeDrawer());
-    navigation.reset({
-      index: 0,
-      routes: [
-        {
-          name: 'Root',
-          state: {
-            routes: [{ name: 'Login' }],
-          },
-        },
-      ],
-    });
+  const closeDrawer = () => navigation.dispatch(DrawerActions.closeDrawer());
+
+  const navigateTo = (screen, params) => {
+    closeDrawer();
+    navigation.navigate('Root', { screen, ...(params ? { params } : {}) });
   };
 
   return (
@@ -44,243 +36,194 @@ export function CustomDrawerContent({ navigation, ...props }) {
       ]}
     >
       {/* Header */}
-      <View style={styles.header}>
-        <Image source={require('../assets/logo-2x.png')} style={styles.logo} resizeMode="contain" />
-
-        {customerInfo ? (
-          <View style={styles.profileBlock}>
-            <View style={styles.profileRow}>
-              <TouchableOpacity
-                style={[styles.profileCircle, { backgroundColor: theme.colors.primary }]}
-              >
-                <Text style={styles.profileInitial}>
-                  {username.charAt(0).toUpperCase()}
-                </Text>
-              </TouchableOpacity>
-              <View style={styles.nameBlock}>
-                <Text style={[styles.profileName, { color: theme.colors.text }]}>
-                  {customerInfo.name}
-                </Text>
-                {selectedBranch && (
-                  <Text style={[styles.branchText, { color: theme.colors.primary }]}>
-                    {selectedBranch.name}
-                  </Text>
-                )}
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.signInButton, { backgroundColor: theme.colors.primary, marginTop: 16 }]}
-              onPress={handleLogout}
-            >
-              <Text style={[styles.signInText, { color: '#fff' }]}>
-                LOGOUT
-              </Text>
-              <Image
-                source={require('../assets/login.png')}
-                style={[styles.signInIcon, { tintColor: '#fff' }]}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
+      <View style={[styles.header, { backgroundColor: theme.colors.primary }]}>
+        <Image
+          source={require('../assets/Kruncheese.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        {selectedBranch && (
+          <View style={styles.branchRow}>
+            <MapPin size={14} color="rgba(255,255,255,0.8)" />
+            <Text style={styles.branchText} numberOfLines={1}>
+              {selectedBranch.name}
+            </Text>
           </View>
-        ) : (
-          <>
-            <Text style={[styles.title, { color: theme.colors.text }]}>
-              Login To KRUNCHEESE
-            </Text>
-            <Text style={[styles.subtitle, { color: theme.colors.text }]}>
-              Unlock offers & discounts
-            </Text>
-            <TouchableOpacity
-              style={[styles.signInButton, { backgroundColor: theme.colors.primary }]}
-              onPress={() => {
-                navigation.dispatch(DrawerActions.closeDrawer());
-                navigation.navigate('Root', {
-                  screen: 'HomeTabs',
-                  params: { screen: 'Account' },
-                });
-              }}
-            >
-              <Text style={[styles.signInText, { color: theme.colors.text }]}>
-                SIGN IN
-              </Text>
-              <Image
-                source={require('../assets/login.png')}
-                style={styles.signInIcon}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          </>
+        )}
+        {orderDetails?.orderType && (
+          <View style={styles.orderBadge}>
+            <Text style={styles.orderBadgeText}>{orderDetails.orderType}</Text>
+          </View>
         )}
       </View>
 
-      <View style={[styles.divider, { backgroundColor: theme.colors.primary }]} />
-
-      {/* Explore Menu */}
-      <View style={styles.exploreWrapper}>
+      {/* Menu Items */}
+      <View style={styles.menuSection}>
         <TouchableOpacity
-          style={[styles.exploreCard, { backgroundColor: theme.colors.primary }]}
-          onPress={() => {
-            navigation.dispatch(DrawerActions.closeDrawer());
-            if (!orderDetails?.orderType) {
-              Toast.show({
-                type: 'info',
-                text1: 'Order Type Required',
-                text2: 'Please select Dine In first.',
-                position: 'bottom'
-              });
-              navigation.navigate('Root', { screen: 'Profile' });
-            } else if (!orderDetails?.table_id) {
-              Toast.show({
-                type: 'info',
-                text1: 'Table Required',
-                text2: 'Please select a table first.',
-                position: 'bottom'
-              });
-              navigation.navigate('Root', { screen: 'Profile' });
-            } else {
-              navigation.navigate('Root', {
-                screen: 'HomeTabs',
-                params: { screen: 'Updates', params: { category: 'All' } },
-              });
-            }
-          }}
+          style={styles.menuItem}
+          onPress={() => navigateTo('HomeTabs')}
         >
-          <Text style={[styles.exploreText, { color: theme.colors.text }]}>
+          <UtensilsCrossed size={20} color={theme.colors.primary} />
+          <Text style={[styles.menuItemText, { color: theme.colors.text }]}>
             Explore Menu
           </Text>
         </TouchableOpacity>
-      </View>
 
-      {/* Today Orders */}
-      <View style={[styles.exploreWrapper, { paddingTop: 0 }]}>
         <TouchableOpacity
-          style={[styles.exploreCard, { backgroundColor: theme.colors.primary }]}
-          onPress={() => {
-            navigation.dispatch(DrawerActions.closeDrawer());
-            navigation.navigate('Root', { screen: 'TodayOrders' });
-          }}
+          style={styles.menuItem}
+          onPress={() => navigateTo('Cart')}
         >
-          <Text style={[styles.exploreText, { color: theme.colors.text }]}>
-            Today Orders
+          <ShoppingCart size={20} color={theme.colors.primary} />
+          <Text style={[styles.menuItemText, { color: theme.colors.text }]}>
+            My Cart
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigateTo('LocationSelection')}
+        >
+          <MapPin size={20} color={theme.colors.primary} />
+          <Text style={[styles.menuItemText, { color: theme.colors.text }]}>
+            Change Location
           </Text>
         </TouchableOpacity>
       </View>
 
       <View style={{ flex: 1 }} />
 
-      {/* Theme toggle */}
+      {/* Theme Toggle */}
       <View style={styles.themeRow}>
+        {theme.dark
+          ? <Moon size={18} color={theme.colors.textSecondary || theme.colors.muted} />
+          : <Sun size={18} color={theme.colors.textSecondary || theme.colors.muted} />
+        }
         <Text style={[styles.themeText, { color: theme.colors.text }]}>
           {theme.dark ? 'Dark Mode' : 'Light Mode'}
         </Text>
         <Switch
           value={theme.dark}
           onValueChange={toggleTheme}
-          trackColor={{ true: '#888', false: '#ccc' }}
+          trackColor={{ true: theme.colors.primary, false: '#ccc' }}
+          thumbColor="#fff"
         />
       </View>
 
-      {/* Terms & Version */}
-      <View style={styles.infoRow}>
-        <TouchableOpacity onPress={() => { /* open T&C */ }}>
-          <Text style={[styles.infoText, { color: theme.colors.primary }]}>
-            Terms & Conditions
+      {/* Footer */}
+      <View style={styles.footer}>
+        <View style={styles.footerInfo}>
+          <TouchableOpacity onPress={() => { /* T&C */ }}>
+            <Text style={[styles.footerLink, { color: theme.colors.primary }]}>
+              Terms & Conditions
+            </Text>
+          </TouchableOpacity>
+          <Text style={[styles.footerVersion, { color: theme.colors.textMuted || '#999' }]}>
+            V-2.0
           </Text>
-        </TouchableOpacity>
-        <Text style={[styles.infoText, { color: theme.colors.primary }]}>
-          V-1.1-U
-        </Text>
-      </View>
+        </View>
 
-      {/* Contact Us */}
-      <TouchableOpacity
-        style={[styles.contactBar, { backgroundColor: theme.colors.primary }]}
-        onPress={() => Linking.openURL('tel:(042)111434434')}
-      >
-        <Text style={[styles.contactText, { color: theme.colors.text }]}>
-          CONTACT US
-        </Text>
-        <Image
-          source={require('../assets/phone-call.png')}
-          style={styles.contactIcon}
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.contactBar, { backgroundColor: theme.colors.primary }]}
+          onPress={() => Linking.openURL('tel:(042)111434434')}
+        >
+          <Phone size={18} color="#fff" />
+          <Text style={styles.contactText}>CONTACT US</Text>
+        </TouchableOpacity>
+      </View>
     </DrawerContentScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingVertical: 20, paddingHorizontal: 16 },
-  logo: { width: 60, height: 60, marginBottom: 12 },
-
-  title: { fontSize: 18, fontWeight: '700', marginBottom: 4 },
-  subtitle: { fontSize: 14, marginBottom: 16 },
-
-  signInButton: {
+  header: {
+    paddingTop: Platform.OS === 'ios' ? 0 : 0,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+  },
+  logo: {
+    width: 140,
+    height: 50,
+    tintColor: '#fff',
+    marginBottom: 12,
+  },
+  branchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    width: '100%',
+    gap: 6,
   },
-  signInText: { fontSize: 16, fontWeight: '700' },
-  signInIcon: { width: 20, height: 20, marginLeft: 'auto' },
-
-  profileBlock: { alignItems: 'flex-start', paddingVertical: 16, width: '100%' },
-  profileRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  nameBlock: { flex: 1 },
-  profileCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  branchText: {
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 14,
+    fontWeight: '500',
+    flex: 1,
+  },
+  orderBadge: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  orderBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  menuSection: {
+    paddingTop: 8,
+  },
+  menuItem: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileInitial: { color: '#FFF', fontSize: 20, fontWeight: '700' },
-  profileName: { fontSize: 18, fontWeight: '700' },
-  branchText: { fontSize: 13, fontWeight: '600', marginTop: 2 },
-
-  divider: { height: 1, marginVertical: 8 },
-
-  exploreWrapper: { paddingHorizontal: 16, paddingVertical: 12 },
-  exploreCard: {
-    borderRadius: 8,
-    height: 48,
-    justifyContent: 'center',
+    paddingVertical: 14,
     paddingHorizontal: 20,
+    gap: 14,
   },
-  exploreText: { fontSize: 16, fontWeight: '600' },
-
+  menuItemText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
   themeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 12,
+    gap: 10,
   },
-  themeText: { fontSize: 16, fontWeight: '600' },
-
-  infoRow: {
+  themeText: {
+    fontSize: 15,
+    fontWeight: '600',
+    flex: 1,
+  },
+  footer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  footerInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  infoText: { fontSize: 13 },
-
+  footerLink: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  footerVersion: {
+    fontSize: 13,
+  },
   contactBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 16,
-    marginBottom: 24,
+    justifyContent: 'center',
+    gap: 8,
     height: 50,
-    borderRadius: 8,
-    paddingHorizontal: 20,
+    borderRadius: 12,
   },
-  contactText: { fontSize: 16, fontWeight: '700' },
-  contactIcon: { width: 20, height: 20, marginLeft: 'auto' },
+  contactText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
 });

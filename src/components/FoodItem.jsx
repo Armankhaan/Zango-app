@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { ThemeContext } from '../context/ThemeContext';
 import { StoreContext } from '../context/StoreContext';
 import { getProductDetails } from '../services/APIservice';
+import { Plus } from 'lucide-react-native';
 
 const FoodItem = (props) => {
   const {
@@ -56,71 +57,97 @@ const FoodItem = (props) => {
   };
 
   return (
-    <View style={styles.itemContainer}>
-      <TouchableOpacity style={styles.button} onPress={handleNavigate} disabled={loading}>
-        {loading ? (
-          <ActivityIndicator size="small" color={theme.colors.primary} />
+    <TouchableOpacity
+      style={styles.card}
+      onPress={handleNavigate}
+      disabled={loading}
+      activeOpacity={0.7}
+    >
+      {/* Left: Text */}
+      <View style={styles.textSection}>
+        <Text style={styles.itemName} numberOfLines={2}>{name}</Text>
+        {description ? (
+          <Text style={styles.itemDesc} numberOfLines={2}>{description}</Text>
+        ) : null}
+        <Text style={styles.itemPrice}>Rs. {price}</Text>
+      </View>
+
+      {/* Right: Image + Add Button */}
+      <View style={styles.imageSection}>
+        {image ? (
+          <Image source={{ uri: image }} style={styles.itemImage} />
         ) : (
-          <>
-            <Text style={styles.itemName}>{name}</Text>
-            <Text style={styles.itemPrice}>Rs {price}</Text>
-          </>
+          <View style={[styles.itemImage, styles.placeholder]} />
         )}
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          style={styles.addBtn}
+          onPress={handleNavigate}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Plus size={18} color="#fff" strokeWidth={3} />
+          )}
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
   );
 };
 
 function getStyles(theme) {
   return StyleSheet.create({
-    itemContainer: {
-      flex: 1,                // fill whatever width the parent gives you
-      margin: 5,
-      padding: 0,
+    card: {
+      flexDirection: 'row',
       alignItems: 'center',
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border || '#EEE',
     },
-    itemImage: {
-      width: '100%',
-      aspectRatio: 1,         // keeps it square
-      resizeMode: 'cover',
-      borderRadius: 5,
-      marginBottom: 10,
+    textSection: {
+      flex: 1,
+      paddingRight: 12,
     },
     itemName: {
-      fontWeight: 'bold',
-      fontSize: 13,
-      textAlign: 'center',
-      marginVertical: 5,
+      fontSize: 16,
+      fontWeight: '700',
       color: theme.colors.text,
+      marginBottom: 4,
+    },
+    itemDesc: {
+      fontSize: 13,
+      color: theme.colors.textSecondary || '#666',
+      marginBottom: 6,
+      lineHeight: 18,
     },
     itemPrice: {
-      color: theme.colors.primary,
-      fontWeight: 'bold',
-      fontSize: 13,
-      marginTop: 5,
+      fontSize: 15,
+      fontWeight: '700',
+      color: theme.colors.text,
     },
-    button: {
-      backgroundColor: theme.colors.card,
-      borderWidth: 1.5,
-      borderColor: theme.colors.border,
-      paddingVertical: 10,
-      paddingHorizontal: 10,
-      borderRadius: 15,
-      alignSelf: 'stretch',
-      height: 110,
+    imageSection: {
+      position: 'relative',
+    },
+    itemImage: {
+      width: 100,
+      height: 100,
+      borderRadius: 12,
+      backgroundColor: theme.colors.surface || '#F5F5F5',
+    },
+    placeholder: {
+      backgroundColor: theme.colors.surface || '#F5F5F5',
+    },
+    addBtn: {
+      position: 'absolute',
+      bottom: -6,
+      right: -6,
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: theme.colors.primary,
       justifyContent: 'center',
       alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 5,
-      elevation: 2,
-    },
-    buttonText: {
-      color: 'white',
-      fontWeight: 'bold',
-      fontSize: 14,
-      textAlign: 'center',
+      ...theme.shadows?.small,
     },
   });
 }

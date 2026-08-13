@@ -9,20 +9,30 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from 'react-native';
 import { StoreContext } from '../../context/StoreContext';
 import { ThemeContext } from '../../context/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import Config from '../../constants/Config';
+import { User, Lock } from 'lucide-react-native';
 
 export const Login = () => {
-  const [username, setInputUsername] = useState(Config.ADMIN_USERNAME);
-  const [password, setInputPassword] = useState(Config.ADMIN_PASSWORD);
+  const [username, setInputUsername] = useState(Config.ADMIN_USERNAME || '');
+  const [password, setInputPassword] = useState(Config.ADMIN_PASSWORD || '');
   const { loginStub } = useContext(StoreContext);
   const { theme } = useContext(ThemeContext);
   const navigation = useNavigation();
   const styles = getStyles(theme);
+  const [scaleAnim] = useState(new Animated.Value(1));
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, { toValue: 0.96, useNativeDriver: true }).start();
+  };
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, { toValue: 1, friction: 3, useNativeDriver: true }).start();
+  };
 
   const handleLogin = async () => {
     const res = await loginStub(username, password);
@@ -37,7 +47,7 @@ export const Login = () => {
       Toast.show({
         type: 'error',
         text1: 'Login Failed',
-        text2: res && res.message ? res.message : `Invalid credentials. Use ${Config.ADMIN_USERNAME}/${Config.ADMIN_PASSWORD}`,
+        text2: res && res.message ? res.message : 'Invalid credentials',
       });
     }
   };
@@ -45,51 +55,64 @@ export const Login = () => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={styles.container}
     >
-      <View style={styles.inner}>
-        <View style={styles.logoContainer}>
-          <Image
-            source={require('../../assets/Kruncheese.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={[styles.title, { color: theme.colors.text }]}>Welcome Back</Text>
-          <Text style={[styles.subtitle, { color: theme.colors.text }]}>Please login to continue</Text>
-        </View>
+      {/* Red Header Section */}
+      <View style={styles.headerSection}>
+        <Image
+          source={require('../../assets/Kruncheese.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.tagline}>Your Way Everyday!</Text>
+      </View>
 
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Username</Text>
+      {/* White Form Section */}
+      <View style={styles.formSection}>
+        <Text style={styles.welcomeTitle}>Welcome Back</Text>
+        <Text style={styles.welcomeSubtitle}>Please login to continue</Text>
+
+        <View style={styles.inputContainer}>
+          <View style={styles.inputWrapper}>
+            <View style={styles.inputIconBox}>
+              <User size={20} color={theme.colors.primary} />
+            </View>
             <TextInput
-              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+              style={styles.input}
               value={username}
               onChangeText={setInputUsername}
-              placeholder="Enter username"
-              placeholderTextColor="#888"
+              placeholder="Username"
+              placeholderTextColor={theme.colors.textMuted || '#999'}
               autoCapitalize="none"
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.colors.text }]}>Password</Text>
+          <View style={styles.inputWrapper}>
+            <View style={styles.inputIconBox}>
+              <Lock size={20} color={theme.colors.primary} />
+            </View>
             <TextInput
-              style={[styles.input, { color: theme.colors.text, borderColor: theme.colors.border }]}
+              style={styles.input}
               value={password}
               onChangeText={setInputPassword}
-              placeholder="Enter password"
-              placeholderTextColor="#888"
+              placeholder="Password"
+              placeholderTextColor={theme.colors.textMuted || '#999'}
               secureTextEntry
             />
           </View>
+        </View>
 
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
           <TouchableOpacity
-            style={[styles.loginBtn, { backgroundColor: theme.colors.primary }]}
+            style={styles.loginBtn}
             onPress={handleLogin}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            activeOpacity={0.9}
           >
             <Text style={styles.loginBtnText}>Login</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
       </View>
       <Toast />
     </KeyboardAvoidingView>
@@ -99,72 +122,84 @@ export const Login = () => {
 const getStyles = theme => StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.primary,
   },
-  inner: {
-    flex: 1,
-    padding: 24,
+  headerSection: {
+    flex: 0.35,
+    backgroundColor: theme.colors.primary,
     justifyContent: 'center',
-  },
-  logoContainer: {
     alignItems: 'center',
-    marginBottom: 48,
+    paddingTop: 40,
   },
   logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 16,
+    width: 200,
+    height: 80,
+    tintColor: '#fff',
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    marginBottom: 8,
-    fontFamily: theme.fonts?.bold,
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    fontSize: 16,
-    opacity: 0.7,
-    fontFamily: theme.fonts?.medium,
-  },
-  form: {
-    gap: 20,
-  },
-  inputGroup: {
-    gap: 8,
-  },
-  label: {
+  tagline: {
+    color: 'rgba(255,255,255,0.8)',
     fontSize: 14,
-    fontWeight: '700',
-    marginLeft: 4,
-    fontFamily: theme.fonts?.bold,
-    opacity: 0.8,
+    fontWeight: '500',
+    marginTop: 8,
+    fontStyle: 'italic',
   },
-  input: {
-    height: 60,
-    borderWidth: 1.5,
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    fontSize: 16,
-    backgroundColor: theme.colors.card,
-    fontFamily: theme.fonts?.regular,
+  formSection: {
+    flex: 0.65,
+    backgroundColor: theme.colors.background,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingHorizontal: 24,
+    paddingTop: 36,
   },
-  loginBtn: {
-    height: 60,
-    borderRadius: 16,
+  welcomeTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: theme.colors.text,
+    marginBottom: 6,
+  },
+  welcomeSubtitle: {
+    fontSize: 15,
+    color: theme.colors.textSecondary || theme.colors.muted,
+    marginBottom: 32,
+  },
+  inputContainer: {
+    gap: 16,
+    marginBottom: 28,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surface || '#F8F8F8',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    height: 56,
+    paddingHorizontal: 4,
+  },
+  inputIconBox: {
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 12,
-    elevation: 8,
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: theme.colors.text,
+    paddingRight: 16,
+  },
+  loginBtn: {
+    height: 56,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...theme.shadows?.large,
   },
   loginBtnText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '800',
-    fontFamily: theme.fonts?.bold,
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
 });

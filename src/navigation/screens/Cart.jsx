@@ -1,11 +1,12 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
 import { StoreContext } from '../../context/StoreContext';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { ThemeContext } from '../../context/ThemeContext';
 import axios from 'axios';
 import Config from '../../constants/Config';
 import getErrorMessage from '../../utils/errorHelper';
+import { Minus, Plus, Trash2 } from 'lucide-react-native';
 
 
 const RenderDetails = ({ details }) => {
@@ -199,12 +200,6 @@ export function Cart() {
     );
   }, [cartItems]);
 
-  useEffect(() => {
-    if (isFocused && !orderDetails?.table_id) {
-      navigation.navigate('Profile');
-    }
-  }, [orderDetails, navigation, isFocused]);
-
   const handleQuantityChange = (key, change) => {
     const currentQty = quantities[key] || cartItems[key]?.quantity || 1;
     const newQuantity = Math.max(1, currentQty + change);
@@ -261,7 +256,6 @@ export function Cart() {
 
   const handleSubmit = async () => {
     if (loading) return;
-    if (!customerInfo) return navigation.navigate('Login');
     if (!entries || !entries.length) return;
 
     setLoading(true);
@@ -272,18 +266,16 @@ export function Cart() {
       const payload = {
         company_id: customerInfo?.company_id || selectedBranch?.company_id,
         branch_id: selectedBranch?.id,
-        username: customerInfo?.username || customerInfo?.name,
-        email: customerInfo?.email,
+        username: customerInfo?.username || customerInfo?.name || 'Guest',
+        email: customerInfo?.email || '',
         employee_id: customerInfo?.employee_id,
         order_info: {
           cart: transformedCart,
-          orderType: orderDetails?.orderType || "Dine In",
-          table_id: orderDetails?.table_id || 3001,
+          orderType: orderDetails?.orderType || "Delivery",
           paymentMethod: 'Cash',
           customerInfo: customerInfo
         }
       };
-
 
       const response = await axios.post(
         'https://api-krc.shabanbabar.com/api/public/orders',
@@ -305,198 +297,402 @@ export function Cart() {
     setShowDetails(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const total = entries.reduce(
-    (sum, item) => sum + item.price * quantities[item.key],
+  const subtotal = entries.reduce(
+    (sum, item) => sum + item.price * (quantities[item.key] || item.quantity),
     0
   );
+  const total = subtotal;
 
   if (entries.length === 0) {
     return (
-      <View style={styles.center}>
-        <Text style={styles.empty}>Your cart is empty!</Text>
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyIcon}>🛒</Text>
+        <Text style={styles.emptyTitle}>Your cart is empty</Text>
+        <Text style={styles.emptySubtitle}>Add items from the menu to get started</Text>
+        <TouchableOpacity
+          style={styles.browseBtn}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.browseBtnText}>Browse Menu</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      {/* Deliver To */}
+      {selectedBranch && (
+        <View style={styles.deliverRow}>
+          <View>
+            <Text style={styles.deliverLabel}>
+              {orderDetails?.orderType === 'Pick-Up' ? 'Pick up from' : 'Deliver To'}
+            </Text>
+            <Text style={styles.deliverBranch} numberOfLines={1}>{selectedBranch.name}</Text>
+          </View>
+          <TouchableOpacity onPress={() => navigation.navigate('LocationSelection')}>
+            <Text style={styles.changeLink}>Change</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* Items Header */}
+        <Text style={styles.itemsHeader}>Items</Text>
+
         {entries.map(item => (
           <View key={item.key} style={styles.cartItem}>
-            <View style={styles.itemHeader}>
-              <Text style={styles.name}>{item.name}</Text>
-              <TouchableOpacity onPress={() => removeFromCart(item.key)}>
-                <Image
-                  source={require('../../assets/delete.png')}
-                  style={styles.deleteIcon}
-                />
-              </TouchableOpacity>
+            <View style={styles.itemRow}>
+              {/* Product Image Placeholder */}
+              <View style={styles.itemImageWrap}>
+                {item.image ? (
+                  <Image source={{ uri: item.image }} style={styles.itemImage} />
+                ) : (
+                  <View style={[styles.itemImage, { backgroundColor: theme.colors.surface || '#F5F5F5' }]} />
+                )}
+              </View>
+
+              {/* Item Info */}
+              <View style={styles.itemInfo}>
+                <View style={styles.itemHeaderRow}>
+                  <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+                  <Text style={styles.itemPrice}>Rs. {(item.price * (quantities[item.key] || item.quantity)).toFixed(0)}</Text>
+                </View>
+
+                {/* Quantity Controls */}
+                <View style={styles.qtyRow}>
+                  <View style={styles.qtyControls}>
+                    <TouchableOpacity
+                      onPress={() => handleQuantityChange(item.key, -1)}
+                      style={styles.qtyBtn}
+                    >
+                      <Minus size={16} color={theme.colors.primary} strokeWidth={3} />
+                    </TouchableOpacity>
+                    <Text style={styles.qtyText}>{quantities[item.key] || item.quantity}</Text>
+                    <TouchableOpacity
+                      onPress={() => handleQuantityChange(item.key, 1)}
+                      style={styles.qtyBtn}
+                    >
+                      <Plus size={16} color={theme.colors.primary} strokeWidth={3} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() => removeFromCart(item.key)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Trash2 size={18} color={theme.colors.error || '#F44336'} />
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
 
-            <Text style={styles.price}>
-              Rs {item.price} × {quantities[item.key]}
-            </Text>
-
-            <View style={styles.qtyContainer}>
+            {/* Details Toggle */}
+            {item.details && (
               <TouchableOpacity
-                onPress={() => handleQuantityChange(item.key, -1)}
-                style={styles.qtyBtn}
+                onPress={() => toggleDetails(item.key)}
+                style={styles.detailsToggle}
               >
-                <Text style={styles.qtyBtnText}>–</Text>
+                <Text style={styles.detailsToggleText}>
+                  {showDetails[item.key] ? 'Hide Details ▲' : 'Show Details ▼'}
+                </Text>
               </TouchableOpacity>
-              <Text style={styles.qtyText}>{quantities[item.key]}</Text>
-              <TouchableOpacity
-                onPress={() => handleQuantityChange(item.key, 1)}
-                style={styles.qtyBtn}
-              >
-                <Text style={styles.qtyBtnText}>+</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              onPress={() => toggleDetails(item.key)}
-              style={styles.detailsBtn}
-            >
-              <Text style={styles.detailsBtnText}>
-                {showDetails[item.key] ? 'Hide Details' : 'Show Details'}
-              </Text>
-            </TouchableOpacity>
+            )}
 
             {showDetails[item.key] && item.details && (
               <RenderDetails details={item.details} />
             )}
           </View>
         ))}
+
+        {/* Order Summary */}
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Subtotal</Text>
+            <Text style={styles.summaryValue}>Rs. {subtotal.toFixed(0)}</Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.summaryRow}>
+            <Text style={styles.totalLabel}>Grand Total</Text>
+            <Text style={styles.totalValue}>Rs. {total.toFixed(0)}</Text>
+          </View>
+        </View>
       </ScrollView>
 
-      <View style={styles.totalBox}>
-        <View style={styles.totalContainer}>
-          <Text style={styles.totalText}>Total: Rs {total}</Text>
-
-          {/* REPLACED button */}
-          <TouchableOpacity
-            onPress={handleSubmit}
-            style={[styles.proceedBtn, loading && { opacity: 0.7 }]}
-            disabled={loading}
-          >
-            <Text style={styles.clearBtnText}>
-              {loading ? 'Processing...' : 'Place Order Now'}
-            </Text>
-          </TouchableOpacity>
+      {/* Bottom Action Bar */}
+      <View style={styles.bottomBar}>
+        <View style={styles.totalRow}>
+          <Text style={styles.bottomTotal}>Total</Text>
+          <Text style={styles.bottomTotalAmount}>Rs. {total.toFixed(0)}</Text>
         </View>
+        <TouchableOpacity
+          onPress={handleSubmit}
+          style={[styles.checkoutBtn, loading && { opacity: 0.7 }]}
+          disabled={loading}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.checkoutBtnText}>
+            {loading ? 'Processing...' : 'Proceed to Checkout'}
+          </Text>
+        </TouchableOpacity>
       </View>
-
     </View>
   );
 }
 
 const getStyles = theme => {
-  const isDay = !theme.dark;  // light theme when theme.dark === false
-
   return StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: theme.colors.background,
     },
-    scrollView: { flex: 1 },
-    scrollContent: { padding: 20, paddingBottom: 120 },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    emptyText: { fontSize: 18, color: theme.colors.text },
-
-    cartItem: {
-      backgroundColor: isDay ? '#fff' : '#1f1f1f',
-      padding: 16,
-      marginBottom: 12,
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: isDay ? '#e0e0e0' : '#333',
-      shadowOpacity: 0.1,
-      shadowOffset: { width: 0, height: 2 },
-      shadowRadius: 4,
-      elevation: 3,
-    },
-
-    itemHeader: {
+    // Delivery row
+    deliverRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 8,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
     },
-    name: { fontSize: 18, fontWeight: 'bold', color: theme.colors.text },
-    deleteIcon: { width: 24, height: 24, tintColor: theme.colors.notification },
-    price: { fontSize: 16, color: theme.colors.text, marginBottom: 8 },
-
-    qtyContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-    qtyBtn: {
-      padding: 6,
-      borderWidth: 1,
-      borderColor: isDay ? theme.colors.border : '#555',
-      borderRadius: 4,
-      backgroundColor: isDay ? theme.colors.card : '#2a2a2a',
+    deliverLabel: {
+      fontSize: 12,
+      color: theme.colors.textSecondary || '#666',
     },
-    qtyBtnText: { fontSize: 18, width: 20, textAlign: 'center', color: theme.colors.text },
-    qtyText: { fontSize: 16, marginHorizontal: 8, color: theme.colors.text },
-
-    detailsBtn: {
-      backgroundColor: theme.colors.primary,
-      padding: 8,
-      borderRadius: 6,
-      alignItems: 'center',
-      marginBottom: 8,
-    },
-    detailsBtnText: { color: theme.colors.background, fontWeight: '600' },
-
-    totalBox: { marginBottom: 80, paddingHorizontal: 20 },
-    totalContainer: {
-      backgroundColor: isDay ? theme.colors.card : '#2a2a2a',
-      padding: 16,
-      borderRadius: 8,
-      borderTopWidth: 1,
-      borderColor: isDay ? theme.colors.border : '#444',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    totalText: { fontSize: 18, fontWeight: 'bold', color: theme.colors.text },
-    proceedBtn: {
-      backgroundColor: theme.colors.primary,
-      paddingVertical: 6,
-      paddingHorizontal: 12,
-      borderRadius: 6,
-    },
-    clearBtnText: { color: theme.colors.background, fontWeight: '600' },
-
-    // Details section styling
-    detailsContainer: {
-      backgroundColor: isDay ? '#f9f9f9' : '#333',
-      padding: 12,
-      borderRadius: 18,
-      borderWidth: 1,
-      borderColor: theme.colors.primary,
-    },
-    detailsTitle: {
+    deliverBranch: {
       fontSize: 16,
-      fontWeight: '600',
-      marginBottom: 6,
+      fontWeight: '700',
+      color: theme.colors.text,
+      maxWidth: 250,
+    },
+    changeLink: {
+      fontSize: 14,
+      fontWeight: '700',
       color: theme.colors.primary,
     },
-    subHeading: {
+    // Scroll
+    scrollView: { flex: 1 },
+    scrollContent: { paddingHorizontal: 20, paddingBottom: 200 },
+    itemsHeader: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: theme.colors.text,
+      marginTop: 16,
+      marginBottom: 8,
+    },
+    // Cart Item
+    cartItem: {
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    itemRow: {
+      flexDirection: 'row',
+    },
+    itemImageWrap: {
+      marginRight: 14,
+    },
+    itemImage: {
+      width: 64,
+      height: 64,
+      borderRadius: 10,
+    },
+    itemInfo: {
+      flex: 1,
+    },
+    itemHeaderRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: 10,
+    },
+    itemName: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.colors.text,
+      flex: 1,
+      marginRight: 8,
+    },
+    itemPrice: {
       fontSize: 15,
-      fontWeight: '500',
+      fontWeight: '700',
+      color: theme.colors.text,
+    },
+    qtyRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    qtyControls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.colors.borderMedium || theme.colors.border,
+      borderRadius: 8,
+    },
+    qtyBtn: {
+      width: 36,
+      height: 32,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    qtyText: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: theme.colors.text,
+      minWidth: 24,
+      textAlign: 'center',
+    },
+    // Details
+    detailsToggle: {
+      marginTop: 8,
+    },
+    detailsToggleText: {
+      fontSize: 13,
+      color: theme.colors.primary,
+      fontWeight: '600',
+    },
+    detailsContainer: {
+      backgroundColor: theme.colors.surface || '#F9F9F9',
+      padding: 12,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      marginTop: 8,
+    },
+    subHeading: {
+      fontSize: 14,
+      fontWeight: '600',
       marginVertical: 4,
       color: theme.colors.primary,
     },
     detailLine: {
-      fontSize: 14,
-      marginBottom: 4,
+      fontSize: 13,
+      marginBottom: 3,
       color: theme.colors.text,
     },
     detailLabel: {
-      fontWeight: 'bold',
+      fontWeight: '700',
       color: theme.colors.primary,
+    },
+    // Summary
+    summaryCard: {
+      marginTop: 20,
+      padding: 16,
+      backgroundColor: theme.colors.surface || '#F9F9F9',
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    summaryRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 6,
+    },
+    summaryLabel: {
+      fontSize: 15,
+      color: theme.colors.text,
+      fontWeight: '600',
+    },
+    summaryValue: {
+      fontSize: 15,
+      color: theme.colors.text,
+      fontWeight: '600',
+    },
+    divider: {
+      height: 1,
+      backgroundColor: theme.colors.border,
+      marginVertical: 8,
+    },
+    totalLabel: {
+      fontSize: 17,
+      fontWeight: '800',
+      color: theme.colors.text,
+    },
+    totalValue: {
+      fontSize: 17,
+      fontWeight: '800',
+      color: theme.colors.text,
+    },
+    // Bottom bar
+    bottomBar: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: theme.colors.background,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border,
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: Platform.OS === 'ios' ? 36 : 16,
+    },
+    totalRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 12,
+    },
+    bottomTotal: {
+      fontSize: 17,
+      fontWeight: '700',
+      color: theme.colors.text,
+    },
+    bottomTotalAmount: {
+      fontSize: 17,
+      fontWeight: '800',
+      color: theme.colors.text,
+    },
+    checkoutBtn: {
+      backgroundColor: theme.colors.primary,
+      height: 52,
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    checkoutBtnText: {
+      color: '#fff',
+      fontSize: 17,
+      fontWeight: '700',
+    },
+    // Empty State
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.colors.background,
+      padding: 24,
+    },
+    emptyIcon: {
+      fontSize: 64,
+      marginBottom: 16,
+    },
+    emptyTitle: {
+      fontSize: 22,
+      fontWeight: '700',
+      color: theme.colors.text,
+      marginBottom: 8,
+    },
+    emptySubtitle: {
+      fontSize: 15,
+      color: theme.colors.textSecondary || '#666',
+      marginBottom: 24,
+      textAlign: 'center',
+    },
+    browseBtn: {
+      backgroundColor: theme.colors.primary,
+      paddingHorizontal: 32,
+      paddingVertical: 14,
+      borderRadius: 12,
+    },
+    browseBtnText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '700',
     },
   });
 };
