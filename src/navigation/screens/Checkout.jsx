@@ -37,9 +37,9 @@ export function Checkout() {
     0
   );
   const deliveryFee = orderDetails?.orderType === 'Pick-Up' ? 0 : 130;
-  const taxRate = 0.16;
-  const tax = subtotal * taxRate;
-  const grandTotal = subtotal + deliveryFee + tax;
+  // Inclusive Tax Math: total includes tax, so GST = subtotal * (16 / 116)
+  const tax = subtotal * (16 / 116);
+  const grandTotal = subtotal + deliveryFee;
 
   const transformCartItems = (cart) => {
     const transformed = {};
@@ -183,29 +183,31 @@ export function Checkout() {
 
         {/* Delivery Address Section */}
         {orderDetails?.orderType === 'Delivery' && (
-          <>
-            <View style={[styles.sectionHeader, { marginTop: 24 }]}>
-              <MapPin size={20} color={theme.colors.primary} />
-              <Text style={styles.sectionTitle}>Delivery Address</Text>
-            </View>
-            <View style={styles.inputCard}>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
-                  placeholder="Enter full home/office delivery address"
-                  multiline
-                  value={address}
-                  onChangeText={setAddress}
-                  placeholderTextColor={theme.colors.textMuted || '#999'}
-                />
+          <View style={styles.addressContainer}>
+            <View style={styles.addressCard}>
+              <View style={styles.addressLeft}>
+                <View style={styles.addressIconWrap}>
+                  <MapPin size={22} color={theme.colors.primary} />
+                </View>
+                <View style={styles.addressTextColumn}>
+                  <Text style={styles.addressTitle}>Delivery Address</Text>
+                  <TextInput
+                    style={styles.addressInput}
+                    placeholder="Tap to add address"
+                    placeholderTextColor={theme.colors.textMuted || '#999'}
+                    value={address}
+                    onChangeText={setAddress}
+                    multiline
+                  />
+                </View>
               </View>
             </View>
-          </>
+          </View>
         )}
 
         {/* Order Instructions Section */}
         <View style={[styles.sectionHeader, { marginTop: 24 }]}>
-          <Text style={styles.sectionTitle}>+ Add instructions for your order</Text>
+          <Text style={styles.sectionTitle}>+ Add any instructions for your order</Text>
         </View>
         <View style={styles.inputCard}>
           <View style={styles.inputWrapper}>
@@ -226,7 +228,7 @@ export function Checkout() {
         </View>
         <View style={styles.paymentContainer}>
           <View style={[styles.paymentBtn, styles.paymentBtnSelected]}>
-            <Text style={[styles.paymentText, styles.paymentTextSelected]}>COD (Cash on Delivery)</Text>
+            <Text style={[styles.paymentText, styles.paymentTextSelected]}>COD</Text>
           </View>
         </View>
 
@@ -234,20 +236,16 @@ export function Checkout() {
         <View style={styles.billDetailsCard}>
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Subtotal</Text>
-            <Text style={styles.billVal}>Rs. {subtotal.toFixed(0)}</Text>
+            <Text style={styles.billVal}>Rs. {subtotal.toFixed(2)}</Text>
           </View>
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Delivery Fee</Text>
-            <Text style={styles.billVal}>Rs. {deliveryFee.toFixed(0)}</Text>
-          </View>
-          <View style={styles.billRow}>
-            <Text style={styles.billLabel}>GST (16%)</Text>
-            <Text style={styles.billVal}>Rs. {tax.toFixed(0)}</Text>
+            <Text style={styles.billVal}>Rs. {deliveryFee.toFixed(2)}</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.billRow}>
-            <Text style={styles.grandTotalLabel}>Grand Total</Text>
-            <Text style={styles.grandTotalVal}>Rs. {grandTotal.toFixed(0)}</Text>
+            <Text style={styles.grandTotalLabel}>Grand Total <Text style={styles.inclusiveTaxLabel}>(Incl. 16% Tax)</Text></Text>
+            <Text style={styles.grandTotalVal}>Rs. {grandTotal.toFixed(2)}</Text>
           </View>
         </View>
       </ScrollView>
@@ -392,10 +390,55 @@ const getStyles = (theme) => StyleSheet.create({
     fontWeight: '800',
     color: theme.colors.text,
   },
+  inclusiveTaxLabel: {
+    fontSize: 11,
+    color: theme.colors.textSecondary || '#666',
+    fontWeight: '400',
+  },
   grandTotalVal: {
     fontSize: 16,
     fontWeight: '800',
     color: theme.colors.text,
+  },
+  addressContainer: {
+    marginTop: 24,
+  },
+  addressCard: {
+    backgroundColor: theme.colors.surface || '#F8F8F8',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: 16,
+  },
+  addressLeft: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  addressIconWrap: {
+    backgroundColor: 'rgba(211, 47, 47, 0.1)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  addressTextColumn: {
+    flex: 1,
+  },
+  addressTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: theme.colors.text,
+    marginBottom: 4,
+  },
+  addressInput: {
+    fontSize: 14,
+    color: theme.colors.text,
+    padding: 0,
+    minHeight: 24,
+    textAlignVertical: 'top',
   },
   bottomBar: {
     position: 'absolute',
