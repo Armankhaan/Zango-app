@@ -4,10 +4,11 @@
  * Global Configuration for Kruncheese App
  */
 export const Config = {
-  // Administrative Credentials for loginStub (Development/Testing)
+  // Company ID for Kruncheese
+  COMPANY_ID: 2,
 
-  // API Configuration (can be expanded if needed)
-  BASE_URL: 'https://api.pjcrescent.com/api/public',
+  // API Configuration
+  BASE_URL: 'https://api-krc.shabanbabar.com/api/public',
 };
 
 export default Config;

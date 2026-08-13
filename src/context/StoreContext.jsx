@@ -104,7 +104,7 @@ const StoreContextProvider = ({ children }) => {
           } catch (e) { }
         }
 
-        const compIdToUse = activeBranch?.company_id || userCompId;
+        const compIdToUse = activeBranch?.company_id || userCompId || Config.COMPANY_ID || 2;
 
         // Each network call is isolated — a failure in one won't abort the others
         // Menu fetch
@@ -117,9 +117,10 @@ const StoreContextProvider = ({ children }) => {
         }
 
         // Trade areas fetch
-        if (compIdToUse) {
+        const activeCompId = compIdToUse || Config.COMPANY_ID || 2;
+        if (activeCompId) {
           try {
-            const tradeAreasData = await getTradeAreas(compIdToUse);
+            const tradeAreasData = await getTradeAreas(activeCompId);
             if (tradeAreasData && tradeAreasData.status) {
               setTradeAreas(tradeAreasData.trade_areas);
             }
