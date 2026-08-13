@@ -278,7 +278,7 @@ export function Cart() {
       };
 
       const response = await axios.post(
-        'https://api-krc.shabanbabar.com/api/public/orders',
+        `${Config.BASE_URL}/orders`,
         payload
       );
 

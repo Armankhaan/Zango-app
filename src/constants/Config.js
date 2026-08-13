@@ -7,8 +7,7 @@ export const Config = {
   // Company ID for Kruncheese
   COMPANY_ID: 2,
 
-  // API Configuration
-  BASE_URL: 'https://api-krc.shabanbabar.com/api/public',
+  BASE_URL: 'https://api.pjcrescent.com/api/public',
 };
 
 export default Config;
