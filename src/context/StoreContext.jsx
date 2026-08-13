@@ -91,20 +91,22 @@ const StoreContextProvider = ({ children }) => {
         if (savedBranch) {
           try {
             activeBranch = JSON.parse(savedBranch);
+            // If the cached branch belongs to a different company, clear it to prevent wrong branch loading
+            if (activeBranch && activeBranch.company_id !== Config.COMPANY_ID) {
+              activeBranch = null;
+              await AsyncStorage.removeItem('selectedBranch');
+              await AsyncStorage.removeItem('selectedSubRegion');
+              await AsyncStorage.removeItem('menuData');
+              setSelectedSubRegion(null);
+              setMenuData({ categories: [], deals: [], branch: null });
+            }
           } catch (e) {
             console.warn('Failed to parse saved branch', e);
           }
         }
         setSelectedBranch(activeBranch);
 
-        let userCompId = null;
-        if (savedCustomer) {
-          try {
-            userCompId = JSON.parse(savedCustomer).company_id;
-          } catch (e) { }
-        }
-
-        const compIdToUse = activeBranch?.company_id || userCompId || Config.COMPANY_ID;
+        const compIdToUse = Config.COMPANY_ID;
 
         // Each network call is isolated — a failure in one won't abort the others
         // Menu fetch
@@ -117,7 +119,7 @@ const StoreContextProvider = ({ children }) => {
         }
 
         // Trade areas fetch
-        const activeCompId = compIdToUse || Config.COMPANY_ID || 2;
+        const activeCompId = Config.COMPANY_ID;
         if (activeCompId) {
           try {
             const tradeAreasData = await getTradeAreas(activeCompId);
@@ -337,7 +339,7 @@ const StoreContextProvider = ({ children }) => {
         setSelectedBranch(branch);
         await AsyncStorage.setItem('selectedBranch', JSON.stringify(branch));
 
-        await fetchMenu(branch.id, branch.company_id);
+        await fetchMenu(branch.id, Config.COMPANY_ID);
       }
     } catch (error) {
       console.error("Error resolving branch for sub-region:", subRegion.id, error);
