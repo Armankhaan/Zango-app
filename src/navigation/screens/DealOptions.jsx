@@ -590,14 +590,15 @@ export function DealOptions() {
       return selectedFirstHalfInSlot[sId] && selectedSecondHalfInSlot[sId] && sharedCrustNameInSlot[sId];
     }
 
-    // For regular products, verify that for every non-optional meal option group (e.g. Drinks, Fries)
+    // For regular products, verify that for every non-optional meal option group
+    // (belonging to 'make it a meal' variant group, e.g. Drinks, Fries)
     // there is at least one selection made.
     const toppingsOptions = getToppingsOption(prod);
     if (toppingsOptions && toppingsOptions.length > 0) {
       const isMissingMealChoice = toppingsOptions.some(opt => {
-        const optName = (opt.name || '').toUpperCase().trim();
-        const isOptional = optName === 'ADD ONS' || optName.includes('TOPPING') || optName.includes('ADDON') || optName.includes('EXTRA');
-        if (!isOptional && opt.items && opt.items.length > 0) {
+        const variantName = (opt.variantName || '').toLowerCase().trim();
+        const isMealOption = variantName === 'make it a meal';
+        if (isMealOption && opt.items && opt.items.length > 0) {
           // Verify if any item from this group is selected in selectedToppings for this slot
           const slotToppings = selectedToppings[sId] || {};
           const hasSelection = opt.items.some(item => slotToppings[item.id] && slotToppings[item.id].quantity >= 1);
@@ -798,19 +799,23 @@ export function DealOptions() {
           }
         });
       } else {
-        const toppingsOption = getToppingsOption(prod);
-        if (toppingsOption && toppingsOption.items) {
-          toppingsOption.items.forEach(topping => {
-            const rawPrice = (topping.price !== undefined && topping.price !== null && topping.price !== '') ? topping.price : topping.base_price;
-            const priceVal = parseFloat(rawPrice !== undefined && rawPrice !== null ? rawPrice : 0);
-            if (priceVal === 0) {
-              const existing = slotToppingsMap[topping.id];
-              if (!existing) {
-                slotToppingsMap[topping.id] = { ...topping, quantity: 1, isDefault: true };
+        const toppingsOptions = getToppingsOption(prod);
+        toppingsOptions.forEach(opt => {
+          const optName = (opt.name || '').toUpperCase().trim();
+          const isAddonsGroup = optName === 'ADD ONS' || optName.includes('TOPPING') || optName.includes('ADDON') || optName.includes('EXTRA');
+          if (opt.items) {
+            opt.items.forEach(topping => {
+              const rawPrice = (topping.price !== undefined && topping.price !== null && topping.price !== '') ? topping.price : topping.base_price;
+              const priceVal = parseFloat(rawPrice !== undefined && rawPrice !== null ? rawPrice : 0);
+              if (priceVal === 0 && !isAddonsGroup) {
+                const existing = slotToppingsMap[topping.id];
+                if (!existing) {
+                  slotToppingsMap[topping.id] = { ...topping, quantity: 1, isDefault: true };
+                }
               }
-            }
-          });
-        }
+            });
+          }
+        });
       }
 
       const crustItem = getSelectedCrustItem(prod);
