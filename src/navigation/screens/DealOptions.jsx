@@ -589,6 +589,25 @@ export function DealOptions() {
     if (prod.product?.product_type === 'half_and_half') {
       return selectedFirstHalfInSlot[sId] && selectedSecondHalfInSlot[sId] && sharedCrustNameInSlot[sId];
     }
+
+    // For regular products, verify that for every non-optional meal option group (e.g. Drinks, Fries)
+    // there is at least one selection made.
+    const toppingsOptions = getToppingsOption(prod);
+    if (toppingsOptions && toppingsOptions.length > 0) {
+      const isMissingMealChoice = toppingsOptions.some(opt => {
+        const optName = (opt.name || '').toUpperCase().trim();
+        const isOptional = optName === 'ADD ONS' || optName.includes('TOPPING') || optName.includes('ADDON') || optName.includes('EXTRA');
+        if (!isOptional && opt.items && opt.items.length > 0) {
+          // Verify if any item from this group is selected in selectedToppings for this slot
+          const slotToppings = selectedToppings[sId] || {};
+          const hasSelection = opt.items.some(item => slotToppings[item.id] && slotToppings[item.id].quantity >= 1);
+          return !hasSelection;
+        }
+        return false;
+      });
+      if (isMissingMealChoice) return false;
+    }
+    
     return true;
   });
 
