@@ -1972,11 +1972,11 @@ const getStyles = theme => StyleSheet.create({
   itemGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    justifyContent: 'space-between',
   },
   itemCard: {
     width: '48%',
-    margin: 4,
+    marginBottom: 8,
     backgroundColor: theme.colors.card || (theme.dark ? '#1A1A1A' : '#FFF'),
     borderRadius: 10,
     padding: 12,
