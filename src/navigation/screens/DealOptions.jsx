@@ -260,8 +260,12 @@ export function DealOptions() {
     if (!prodObj || !prodObj.variants) return null;
     for (const variant of prodObj.variants) {
       if (variant.name.toLowerCase().trim() === 'customization' && variant.options) {
+        // Match either 'toppings' or 'add ons'
         const toppingOpt = variant.options.find(
-          opt => opt.name.toLowerCase().trim() === 'toppings'
+          opt => {
+            const name = opt.name.toLowerCase().trim();
+            return name === 'toppings' || name === 'add ons';
+          }
         );
         if (toppingOpt) return toppingOpt;
       }
@@ -1580,12 +1584,11 @@ export function DealOptions() {
                                   )}
                                 </View>
                               );
-                            })
                           ) : (
                             toppingsOption && toppingsOption.items && toppingsOption.items.length > 0 && (
                               <View style={styles.toppingsContainer}>
                                 <View style={styles.toppingsHeader}>
-                                  <Text style={styles.toppingsHeading}>Add Toppings</Text>
+                                  <Text style={styles.toppingsHeading}>{toppingsOption.name || 'Add Toppings'}</Text>
                                   <View style={styles.optionalBadge}>
                                     <Text style={styles.optionalBadgeText}>Optional</Text>
                                   </View>
