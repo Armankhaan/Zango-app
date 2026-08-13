@@ -1584,7 +1584,12 @@ export function DealOptions() {
                                               </View>
                                               </TouchableOpacity>
                                         );
-                              })
+                                      })}
+                                    </View>
+                                  )}
+                                </View>
+                              );
+                            })
                           ) : (
                             toppingsOption && toppingsOption.length > 0 && (
                               <View>
