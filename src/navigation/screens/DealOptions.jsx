@@ -217,10 +217,14 @@ export function DealOptions() {
           const matchingCrust = matchingSizeOpt.items.find(item => 
             displayName.includes(item.name.toLowerCase())
           );
-
           if (matchingCrust) {
             return matchingCrust;
           }
+          // Fallback: If no crust match exists in name, use 'pan' or first item
+          const panCrust = matchingSizeOpt.items.find(item => 
+            item.name.toLowerCase().includes('pan')
+          );
+          return panCrust || matchingSizeOpt.items[0] || null;
         }
       }
     }
