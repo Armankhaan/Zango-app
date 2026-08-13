@@ -256,11 +256,12 @@ export function DealOptions() {
   };
 
   const getToppingsOption = (product) => {
-    if (!product || !product.product || !product.product.variants) return null;
-    for (const variant of product.product.variants) {
-      if (variant.name.toLowerCase().includes('customization') && variant.options) {
+    const prodObj = product?.product || product;
+    if (!prodObj || !prodObj.variants) return null;
+    for (const variant of prodObj.variants) {
+      if (variant.name.toLowerCase().trim() === 'customization' && variant.options) {
         const toppingOpt = variant.options.find(
-          opt => opt.name.toLowerCase().includes('topping')
+          opt => opt.name.toLowerCase().trim() === 'toppings'
         );
         if (toppingOpt) return toppingOpt;
       }
@@ -1469,7 +1470,7 @@ export function DealOptions() {
 
                           {selectedProduct.product?.product_type === 'half_and_half' ? (
                             renderHalfAndHalfUI(sId, selectedProduct)
-                          ) : isProdPizza(selectedProduct) ? (
+                          ) : (isProdPizza(selectedProduct) && Object.keys(getPizzaNestedGroupedOptions(selectedProduct)).length > 0) ? (
                             Object.keys(getPizzaNestedGroupedOptions(selectedProduct)).map((heading) => {
                               const headingToppings = getPizzaNestedGroupedOptions(selectedProduct)[heading];
                               const isMultiSelect = isHeadingMultiSelect(heading);
