@@ -429,13 +429,12 @@ export function Cart() {
           <Text style={styles.bottomTotalAmount}>Rs. {total.toFixed(0)}</Text>
         </View>
         <TouchableOpacity
-          onPress={handleSubmit}
-          style={[styles.checkoutBtn, loading && { opacity: 0.7 }]}
-          disabled={loading}
+          onPress={() => navigation.navigate('Checkout')}
+          style={styles.checkoutBtn}
           activeOpacity={0.8}
         >
           <Text style={styles.checkoutBtnText}>
-            {loading ? 'Processing...' : 'Proceed to Checkout'}
+            Proceed to Checkout
           </Text>
         </TouchableOpacity>
       </View>

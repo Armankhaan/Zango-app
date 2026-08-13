@@ -21,6 +21,7 @@ import { ItemOptions } from './screens/ItemOptions';
 import { Cart } from './screens/Cart';
 import OrderSuccess from './screens/OrderSuccess';
 import { LocationSelection } from './screens/LocationSelection';
+import { Checkout } from './screens/Checkout';
 
 // custom components
 import { CustomDrawerContent } from '../components/CustomDrawerContent';
@@ -76,6 +77,17 @@ export function RootStackNavigator() {
         options={{
           headerShown: true,
           title: 'My Cart',
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: '#fff',
+        }}
+      />
+
+      <Stack.Screen
+        name="Checkout"
+        component={Checkout}
+        options={{
+          headerShown: true,
+          title: 'Checkout',
           headerStyle: { backgroundColor: theme.colors.primary },
           headerTintColor: '#fff',
         }}
