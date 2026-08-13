@@ -249,7 +249,7 @@ export function DealOptions() {
 
   const isHeadingMultiSelect = (heading) => {
     const h = heading.toLowerCase();
-    if (h.includes('portion') || h.includes('sauce') || h.includes('crust')) return false;
+    if (h.includes('portion') || h.includes('sauce') || h.includes('crust') || h.includes('drink') || h.includes('fries') || h.includes('meal')) return false;
     return true;
   };
 
