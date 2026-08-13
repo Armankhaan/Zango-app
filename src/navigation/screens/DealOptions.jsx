@@ -257,20 +257,23 @@ export function DealOptions() {
 
   const getToppingsOption = (product) => {
     const prodObj = product?.product || product;
-    if (!prodObj || !prodObj.variants) return null;
+    if (!prodObj || !prodObj.variants) return [];
+    const collectedOptions = [];
     for (const variant of prodObj.variants) {
-      if (variant.name.toLowerCase().trim() === 'customization' && variant.options) {
-        // Match either 'toppings' or 'add ons'
-        const toppingOpt = variant.options.find(
-          opt => {
-            const name = opt.name.toLowerCase().trim();
-            return name === 'toppings' || name === 'add ons';
+      const vName = variant.name.toLowerCase().trim();
+      if ((vName === 'customization' || vName === 'make it a meal') && variant.options) {
+        variant.options.forEach(opt => {
+          const name = opt.name.toLowerCase().trim();
+          if (name === 'toppings' || name === 'add ons' || name === 'drinks' || name === 'fries' || name.includes('meal')) {
+            collectedOptions.push({
+              ...opt,
+              variantName: variant.name
+            });
           }
-        );
-        if (toppingOpt) return toppingOpt;
+        });
       }
     }
-    return null;
+    return collectedOptions;
   };
 
   const getDefaultToppings = (product) => {
@@ -287,16 +290,18 @@ export function DealOptions() {
         }
       });
     } else {
-      const toppingsOption = getToppingsOption(product);
-      if (toppingsOption && toppingsOption.items) {
-        toppingsOption.items.forEach(topping => {
-          const rawPrice = (topping.price !== undefined && topping.price !== null && topping.price !== '') ? topping.price : topping.base_price;
-          const priceVal = parseFloat(rawPrice !== undefined && rawPrice !== null ? rawPrice : 0);
-          if (priceVal === 0) {
-            defaults[topping.id] = { ...topping, quantity: 1, isDefault: true };
-          }
-        });
-      }
+      const toppingsOptions = getToppingsOption(product);
+      toppingsOptions.forEach(opt => {
+        if (opt.items) {
+          opt.items.forEach(topping => {
+            const rawPrice = (topping.price !== undefined && topping.price !== null && topping.price !== '') ? topping.price : topping.base_price;
+            const priceVal = parseFloat(rawPrice !== undefined && rawPrice !== null ? rawPrice : 0);
+            if (priceVal === 0) {
+              defaults[topping.id] = { ...topping, quantity: 1, isDefault: true };
+            }
+          });
+        }
+      });
     }
     return defaults;
   };
@@ -1585,95 +1590,117 @@ export function DealOptions() {
                                 </View>
                               );
                           ) : (
-                            toppingsOption && toppingsOption.items && toppingsOption.items.length > 0 && (
-                              <View style={styles.toppingsContainer}>
-                                <View style={styles.toppingsHeader}>
-                                  <Text style={styles.toppingsHeading}>{toppingsOption.name || 'Add Toppings'}</Text>
-                                  <View style={styles.optionalBadge}>
-                                    <Text style={styles.optionalBadgeText}>Optional</Text>
-                                  </View>
-                                </View>
-                                <View style={styles.toppingsGrid}>
-                                  {toppingsOption.items.map(topping => {
-                                    const rawPrice = (topping.price !== undefined && topping.price !== null && topping.price !== '') ? topping.price : topping.base_price;
-                                    const priceVal = parseFloat(rawPrice !== undefined && rawPrice !== null ? rawPrice : 0);
-                                    const isToppingSelected = isToppingSelectedHelper(sId, topping, 'Customization');
-                                    const isDefault = priceVal === 0;
-                                    const qty = selectedToppings[sId]?.[topping.id]?.quantity || (isDefault && isToppingSelected ? 1 : 0);
-                                    
-                                    return (
-                                      <TouchableOpacity
-                                        key={topping.id}
-                                        style={[
-                                          styles.toppingCard,
-                                          isToppingSelected && styles.toppingCardSelected
-                                        ]}
-                                        onPress={() => {
-                                            if (isToppingSelected) {
-                                                if (isDefault) handleToppingQuantityChange(sId, topping, 'Customization', -1);
-                                                else if (qty <= 1) handleToggleTopping(sId, topping, 'Customization');
-                                                else handleToppingQuantityChange(sId, topping, 'Customization', -1);
-                                            } else {
-                                                handleToggleTopping(sId, topping, 'Customization');
-                                            }
-                                        }}
-                                      >
-                                        <View style={styles.toppingCardContent}>
-                                          <Text style={[
-                                            styles.toppingLabel,
-                                            isToppingSelected && styles.toppingLabelSelected
-                                          ]}>
-                                            {topping.name}
-                                          </Text>
-                                          
-                                          {!isToppingSelected && priceVal > 0 && (
-                                            <Text style={styles.toppingPrice}>+ Rs {priceVal}</Text>
-                                          )}
-
-                                          {isToppingSelected && (() => {
-                                              let extraCharge = 0;
-                                              if (isDefault && qty > 1) {
-                                                  extraCharge = 170 * (qty - 1);
-                                              } else if (!isDefault && qty > 0) {
-                                                  extraCharge = priceVal * qty;
-                                              }
-                                              return (
-                                                  <View>
-                                                      {extraCharge > 0 && (
-                                                          <Text style={[styles.toppingPrice, styles.toppingLabelSelected]}>
-                                                              +Rs {extraCharge.toFixed(0)}
-                                                          </Text>
-                                                      )}
-                                                      <View style={styles.toppingQtyContainer}>
-                                                          <TouchableOpacity 
-                                                              style={styles.toppingQtyBtn}
-                                                              onPress={() => {
-                                                                  if (isDefault) handleToppingQuantityChange(sId, topping, 'Customization', -1);
-                                                                  else if (qty <= 1) handleToggleTopping(sId, topping, 'Customization');
-                                                                  else handleToppingQuantityChange(sId, topping, 'Customization', -1);
-                                                              }}
-                                                          >
-                                                              <Minus size={14} color={theme.colors.primary} />
-                                                          </TouchableOpacity>
-                                                          <Text style={styles.toppingQtyText}>{qty}</Text>
-                                                          <TouchableOpacity 
-                                                              style={styles.toppingQtyBtn}
-                                                              onPress={() => handleToppingQuantityChange(sId, topping, 'Customization', 1)}
-                                                          >
-                                                              <Plus size={14} color={theme.colors.primary} />
-                                                          </TouchableOpacity>
-                                                      </View>
-                                                  </View>
-                                              );
-                                          })()}
+                            toppingsOption && toppingsOption.length > 0 && (
+                              <View>
+                                {toppingsOption.map((optOption) => {
+                                  if (!optOption.items || optOption.items.length === 0) return null;
+                                  const heading = optOption.name || 'Customization';
+                                  const isMulti = optOption.variantName?.toLowerCase().trim() === 'customization';
+                                  
+                                  return (
+                                    <View key={optOption.id} style={[styles.toppingsContainer, { marginBottom: 16 }]}>
+                                      <View style={styles.toppingsHeader}>
+                                        <Text style={styles.toppingsHeading}>{heading}</Text>
+                                        <View style={styles.optionalBadge}>
+                                          <Text style={styles.optionalBadgeText}>{isMulti ? 'Optional' : 'Meal Choice'}</Text>
                                         </View>
-                                      </TouchableOpacity>
-                                    );
-                                  })}
-                                </View>
+                                      </View>
+                                      <View style={styles.toppingsGrid}>
+                                        {optOption.items.map(topping => {
+                                          const rawPrice = (topping.price !== undefined && topping.price !== null && topping.price !== '') ? topping.price : topping.base_price;
+                                          const priceVal = parseFloat(rawPrice !== undefined && rawPrice !== null ? rawPrice : 0);
+                                          const isToppingSelected = isToppingSelectedHelper(sId, topping, heading);
+                                          const isDefault = priceVal === 0;
+                                          const qty = selectedToppings[sId]?.[topping.id]?.quantity || (isDefault && isToppingSelected ? 1 : 0);
+                                          
+                                          return (
+                                            <TouchableOpacity
+                                              key={topping.id}
+                                              style={[
+                                                styles.toppingCard,
+                                                isToppingSelected && styles.toppingCardSelected
+                                              ]}
+                                              onPress={() => {
+                                                  if (isToppingSelected) {
+                                                      if (isDefault) handleToppingQuantityChange(sId, topping, heading, -1);
+                                                      else if (qty <= 1 && isMulti) handleToggleTopping(sId, topping, heading);
+                                                      else if (qty <= 1 && !isMulti) {
+                                                          // radio button toggle logic if required, else keep selected
+                                                      }
+                                                      else handleToppingQuantityChange(sId, topping, heading, -1);
+                                                  } else {
+                                                      handleToggleTopping(sId, topping, heading);
+                                                  }
+                                              }}
+                                            >
+                                              <View style={styles.toppingCardContent}>
+                                                <Text style={[
+                                                  styles.toppingLabel,
+                                                  isToppingSelected && styles.toppingLabelSelected
+                                                ]}>
+                                                  {topping.name}
+                                                </Text>
+                                                
+                                                {!isToppingSelected && priceVal > 0 && (
+                                                  <Text style={styles.toppingPrice}>+ Rs {priceVal}</Text>
+                                                )}
+
+                                                {isToppingSelected && (() => {
+                                                    let extraCharge = 0;
+                                                    if (isDefault && qty > 1) {
+                                                        extraCharge = 170 * (qty - 1);
+                                                    } else if (!isDefault && qty > 0) {
+                                                        extraCharge = priceVal * qty;
+                                                    }
+                                                    return (
+                                                        <View>
+                                                            {extraCharge > 0 && (
+                                                                <Text style={[styles.toppingPrice, styles.toppingLabelSelected]}>
+                                                                    +Rs {extraCharge.toFixed(0)}
+                                                                </Text>
+                                                            )}
+                                                            <View style={styles.toppingQtyContainer}>
+                                                                {isMulti ? (
+                                                                  <>
+                                                                    <TouchableOpacity 
+                                                                        style={styles.toppingQtyBtn}
+                                                                        onPress={() => {
+                                                                            if (isDefault) handleToppingQuantityChange(sId, topping, heading, -1);
+                                                                            else if (qty <= 1) handleToggleTopping(sId, topping, heading);
+                                                                            else handleToppingQuantityChange(sId, topping, heading, -1);
+                                                                        }}
+                                                                    >
+                                                                        <Minus size={14} color={theme.colors.primary} />
+                                                                    </TouchableOpacity>
+                                                                    <Text style={styles.toppingQtyText}>{qty}</Text>
+                                                                    <TouchableOpacity 
+                                                                        style={styles.toppingQtyBtn}
+                                                                        onPress={() => handleToppingQuantityChange(sId, topping, heading, 1)}
+                                                                    >
+                                                                        <Plus size={14} color={theme.colors.primary} />
+                                                                    </TouchableOpacity>
+                                                                  </>
+                                                                ) : (
+                                                                  <View style={styles.checkBadge}>
+                                                                    <Check size={10} color="#fff" />
+                                                                  </View>
+                                                                )}
+                                                            </View>
+                                                        </View>
+                                                    );
+                                                })()}
+                                              </View>
+                                            </TouchableOpacity>
+                                          );
+                                        })}
+                                      </View>
+                                    </View>
+                                  );
+                                })}
                               </View>
                             )
-                          )}
+                          )
+                          }
 
                           {/* Next/Close selection button */}
                           {index < dealSlots.length - 1 ? (
