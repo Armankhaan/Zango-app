@@ -18,12 +18,13 @@ import { MapPin, ChevronDown, CheckCircle } from 'lucide-react-native';
 
 export function LocationSelection() {
   const { theme } = useContext(ThemeContext);
-  const { tradeAreas, handleSelectSubRegion, loading, selectedBranch, updateOrderDetails } = useContext(StoreContext);
+  const { tradeAreas, handleSelectSubRegion, handleSelectBranch, loading, selectedBranch, updateOrderDetails } = useContext(StoreContext);
   const navigation = useNavigation();
 
   const [orderType, setOrderType] = useState(null);
   const [selectedCityIdx, setSelectedCityIdx] = useState(null);
   const [selectedAreaIdx, setSelectedAreaIdx] = useState(null);
+  const [selectedBranchIdx, setSelectedBranchIdx] = useState(null);
   const [fadeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
@@ -39,12 +40,26 @@ export function LocationSelection() {
   const areas = selectedCity?.sub_regions || [];
   const selectedArea = selectedAreaIdx !== null ? areas[selectedAreaIdx] : null;
 
+  const regionBranches = selectedCity ? Array.from(
+    new Map(areas.filter(sr => sr.branch).map(sr => [sr.branch.id, sr.branch])).values()
+  ) : [];
+  const pickedBranch = selectedBranchIdx !== null ? regionBranches[selectedBranchIdx] : null;
+
   const handleConfirm = async () => {
-    if (!selectedArea || !orderType) return;
-    if (updateOrderDetails) {
-      updateOrderDetails({ orderType });
+    if (!orderType) return;
+    if (orderType === 'Delivery') {
+      if (!selectedArea) return;
+      if (updateOrderDetails) {
+        updateOrderDetails({ orderType });
+      }
+      await handleSelectSubRegion(selectedArea);
+    } else {
+      if (!pickedBranch) return;
+      if (updateOrderDetails) {
+        updateOrderDetails({ orderType });
+      }
+      await handleSelectBranch(pickedBranch);
     }
-    await handleSelectSubRegion(selectedArea);
     navigation.reset({
       index: 0,
       routes: [{ name: 'HomeTabs' }],
@@ -152,6 +167,7 @@ export function LocationSelection() {
               onValueChange={(val) => {
                 setSelectedCityIdx(val);
                 setSelectedAreaIdx(null);
+                setSelectedBranchIdx(null);
               }}
               style={styles.picker}
               itemStyle={styles.pickerItem}
@@ -164,8 +180,8 @@ export function LocationSelection() {
           </View>
         </View>
 
-        {/* Area / Sub-Region Picker */}
-        {selectedCity && (
+        {/* Area / Sub-Region or Branch Picker */}
+        {selectedCity && orderType === 'Delivery' && (
           <Animated.View style={[styles.pickerSection, { opacity: fadeAnim }]}>
             <Text style={styles.pickerLabel}>Area / Sub-Region</Text>
             <View style={styles.pickerWrapper}>
@@ -184,13 +200,32 @@ export function LocationSelection() {
           </Animated.View>
         )}
 
+        {selectedCity && orderType === 'Pick-Up' && (
+          <Animated.View style={[styles.pickerSection, { opacity: fadeAnim }]}>
+            <Text style={styles.pickerLabel}>Branch</Text>
+            <View style={styles.pickerWrapper}>
+              <Picker
+                selectedValue={selectedBranchIdx}
+                onValueChange={(val) => setSelectedBranchIdx(val)}
+                style={styles.picker}
+                itemStyle={styles.pickerItem}
+              >
+                <Picker.Item label="Select Branch" value={null} color={theme.colors.textMuted || '#999'} />
+                {regionBranches.map((branch, idx) => (
+                  <Picker.Item key={branch.id} label={branch.name} value={idx} color={theme.colors.text} />
+                ))}
+              </Picker>
+            </View>
+          </Animated.View>
+        )}
+
         {/* Branch Resolved Info */}
-        {selectedBranch && selectedArea && !loading && (
+        {((orderType === 'Delivery' && selectedBranch && selectedArea) || (orderType === 'Pick-Up' && pickedBranch)) && !loading && (
           <View style={styles.branchCard}>
             <CheckCircle size={20} color={theme.colors.success || '#4CAF50'} />
             <View style={styles.branchInfo}>
               <Text style={styles.branchLabel}>Nearest Branch</Text>
-              <Text style={styles.branchNameText}>{selectedBranch.name}</Text>
+              <Text style={styles.branchNameText}>{orderType === 'Delivery' ? selectedBranch.name : pickedBranch.name}</Text>
             </View>
           </View>
         )}
@@ -201,10 +236,10 @@ export function LocationSelection() {
         <TouchableOpacity
           style={[
             styles.confirmBtn,
-            (!selectedArea || loading) && styles.confirmBtnDisabled,
+            ((orderType === 'Delivery' && !selectedArea) || (orderType === 'Pick-Up' && !pickedBranch) || loading) && styles.confirmBtnDisabled,
           ]}
           onPress={handleConfirm}
-          disabled={!selectedArea || loading}
+          disabled={(orderType === 'Delivery' ? !selectedArea : !pickedBranch) || loading}
           activeOpacity={0.8}
         >
           {loading ? (

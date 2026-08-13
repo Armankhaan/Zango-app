@@ -345,6 +345,19 @@ const StoreContextProvider = ({ children }) => {
     }
   };
 
+  const handleSelectBranch = async (branch) => {
+    setLoading(true);
+    try {
+      setSelectedBranch(branch);
+      await AsyncStorage.setItem('selectedBranch', JSON.stringify(branch));
+      await fetchMenu(branch.id, branch.company_id);
+    } catch (error) {
+      console.error("Error setting branch directly:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const persistCart = async (items) => {
     try {
       await AsyncStorage.setItem('cartItems', JSON.stringify(items));
@@ -433,6 +446,7 @@ const StoreContextProvider = ({ children }) => {
         selectedSubRegion,
         selectedBranch,
         handleSelectSubRegion,
+        handleSelectBranch,
         fetchMenu,
         addToCart,
         updateCartQuantity,
