@@ -296,11 +296,13 @@ export function DealOptions() {
     } else {
       const toppingsOptions = getToppingsOption(product);
       toppingsOptions.forEach(opt => {
+        const optName = (opt.name || '').toUpperCase().trim();
+        const isAddonsGroup = optName === 'ADD ONS' || optName.includes('TOPPING') || optName.includes('ADDON') || optName.includes('EXTRA');
         if (opt.items) {
           opt.items.forEach(topping => {
             const rawPrice = (topping.price !== undefined && topping.price !== null && topping.price !== '') ? topping.price : topping.base_price;
             const priceVal = parseFloat(rawPrice !== undefined && rawPrice !== null ? rawPrice : 0);
-            if (priceVal === 0) {
+            if (priceVal === 0 && !isAddonsGroup) {
               defaults[topping.id] = { ...topping, quantity: 1, isDefault: true };
             }
           });
@@ -389,7 +391,12 @@ export function DealOptions() {
     if (selection) {
       return selection.quantity >= 1;
     }
-    if (isMulti && isDefaultNestedTopping(heading, topping)) {
+    const toppingsOption = getToppingsOption(selectedInSlots[slotId]);
+    const optGroup = toppingsOption?.find(o => (o.name || '') === heading);
+    const optName = (heading || '').toUpperCase().trim();
+    const isAddonsGroup = optName === 'ADD ONS' || optName.includes('TOPPING') || optName.includes('ADDON') || optName.includes('EXTRA');
+    
+    if (isMulti && isDefaultNestedTopping(heading, topping) && !isAddonsGroup) {
       return true;
     }
     return false;
@@ -492,7 +499,7 @@ export function DealOptions() {
         const toppings = selectedToppings[slotId];
         if (toppings) {
           Object.values(toppings).forEach(topping => {
-            if (topping.quantity === undefined || topping.quantity > 0) {
+            if (topping.quantity > 0) {
               const rawPrice = (topping.price !== undefined && topping.price !== null && topping.price !== '') ? topping.price : topping.base_price;
               const priceVal = parseFloat(rawPrice !== undefined && rawPrice !== null ? rawPrice : 0);
               const qty = topping.quantity !== undefined ? topping.quantity : 1;
@@ -510,7 +517,7 @@ export function DealOptions() {
       }
     });
 
-    setTotalPrice(calc * quantity);
+    setTotalPrice(isNaN(calc) ? basePrice * quantity : calc * quantity);
   }, [basePrice, selectedInSlots, selectedToppings, quantity, selectedFirstHalfInSlot, selectedSecondHalfInSlot, sharedCrustNameInSlot, firstHalfSelectionsInSlot, secondHalfSelectionsInSlot]);
 
   const toggleSlotVisibility = (slotId) => {
@@ -543,39 +550,6 @@ export function DealOptions() {
         });
         return next;
       });
-    }
-
-    // If product has no toppings, auto-advance to next slot
-    let hasToppings = false;
-    if (isProdPizza(product)) {
-      const crustItem = getSelectedCrustItem(product);
-      const nestedOptions = crustItem ? (crustItem.options || []) : [];
-      hasToppings = nestedOptions.length > 0;
-    } else {
-      const toppingsOption = getToppingsOption(product);
-      hasToppings = toppingsOption && toppingsOption.items && toppingsOption.items.length > 0;
-    }
-
-    if (!hasToppings && product?.product?.product_type !== 'half_and_half') {
-      const currentIdx = dealSlots.findIndex(s => String(s.id || `slot-${dealSlots.indexOf(s)}`) === String(slotId));
-      if (currentIdx !== -1) {
-        if (currentIdx < dealSlots.length - 1) {
-          const nextSlot = dealSlots[currentIdx + 1];
-          const nextSlotId = nextSlot.id || `slot-${currentIdx + 1}`;
-          setVisibleSlots(prev => ({
-            ...prev,
-            [slotId]: false,
-            [nextSlotId]: true
-          }));
-        } else {
-          setVisibleSlots(prev => ({ ...prev, [slotId]: false }));
-        }
-      }
-    } else if (product?.product?.product_type === 'half_and_half') {
-       setExpandedSections(prev => ({
-         ...prev,
-         [`${slotId}_half_1_pizza`]: true
-       }));
     }
   };
 
