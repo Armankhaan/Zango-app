@@ -104,7 +104,7 @@ const StoreContextProvider = ({ children }) => {
           } catch (e) { }
         }
 
-        const compIdToUse = activeBranch?.company_id || userCompId || Config.COMPANY_ID || 2;
+        const compIdToUse = activeBranch?.company_id || userCompId || Config.COMPANY_ID;
 
         // Each network call is isolated — a failure in one won't abort the others
         // Menu fetch
