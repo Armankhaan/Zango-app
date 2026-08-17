@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { StoreContext } from '../context/StoreContext';
 import { useNavigation } from '@react-navigation/native';
@@ -113,6 +114,12 @@ const FoodDisplay = ({ category }) => {
           >
             <Text style={styles.sectionHeading}>{cat.name}</Text>
 
+            {(cat.id === 'deals-cat' || cat.name?.toLowerCase() === 'deals') ? (
+              <Image source={require('../assets/dealsbanner.jpg.jpeg')} style={styles.categoryImage} />
+            ) : cat.image ? (
+              <Image source={{ uri: cat.image }} style={styles.categoryImage} />
+            ) : null}
+
             {cat.products && cat.products.map(item => (
               <View key={item.id}>
                 {item.is_deal
@@ -191,6 +198,13 @@ const getStyles = (theme) =>
       color: theme.colors.text,
       marginTop: 16,
       marginBottom: 12,
+    },
+    categoryImage: {
+      width: '100%',
+      height: 120,
+      borderRadius: 12,
+      marginBottom: 12,
+      resizeMode: 'cover',
     },
     cartBar: {
       position: 'absolute',

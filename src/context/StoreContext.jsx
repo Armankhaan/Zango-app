@@ -330,6 +330,8 @@ const StoreContextProvider = ({ children }) => {
   const handleSelectSubRegion = async (subRegion) => {
     setLoading(true);
     try {
+      setCartItems({});
+      await AsyncStorage.removeItem('cartItems');
       setSelectedSubRegion(subRegion);
       await AsyncStorage.setItem('selectedSubRegion', JSON.stringify(subRegion));
 
@@ -351,6 +353,8 @@ const StoreContextProvider = ({ children }) => {
   const handleSelectBranch = async (branch) => {
     setLoading(true);
     try {
+      setCartItems({});
+      await AsyncStorage.removeItem('cartItems');
       setSelectedBranch(branch);
       await AsyncStorage.setItem('selectedBranch', JSON.stringify(branch));
       await fetchMenu(branch.id, branch.company_id);

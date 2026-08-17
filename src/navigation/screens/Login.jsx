@@ -9,197 +9,283 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  Animated,
+  ActivityIndicator,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { StoreContext } from '../../context/StoreContext';
 import { ThemeContext } from '../../context/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import Config from '../../constants/Config';
-import { User, Lock } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 
 export const Login = () => {
-  const [username, setInputUsername] = useState(Config.ADMIN_USERNAME || '');
-  const [password, setInputPassword] = useState(Config.ADMIN_PASSWORD || '');
-  const { loginStub } = useContext(StoreContext);
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { updateCustomerInfo } = useContext(StoreContext);
   const { theme } = useContext(ThemeContext);
   const navigation = useNavigation();
-  const styles = getStyles(theme);
-  const [scaleAnim] = useState(new Animated.Value(1));
 
-  const handlePressIn = () => {
-    Animated.spring(scaleAnim, { toValue: 0.96, useNativeDriver: true }).start();
-  };
-  const handlePressOut = () => {
-    Animated.spring(scaleAnim, { toValue: 1, friction: 3, useNativeDriver: true }).start();
+  const handleClose = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('HomeTabs');
+    }
   };
 
   const handleLogin = async () => {
-    const res = await loginStub(username, password);
-    if (res && res.success) {
+    if (!email.trim()) {
+      Toast.show({
+        type: 'error',
+        text1: 'Email Required',
+        text2: 'Please enter your email address',
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const nameFromEmail = email.split('@')[0] || 'Guest User';
+      const customer = {
+        id: Date.now(),
+        name: nameFromEmail,
+        email: email.trim(),
+        phone_number: '923000000000',
+        company_id: Config.COMPANY_ID,
+      };
+
+      await updateCustomerInfo(customer);
+
       Toast.show({
         type: 'success',
         text1: 'Login Successful',
-        text2: 'Welcome back!',
+        text2: `Welcome back, ${nameFromEmail}!`,
       });
-      navigation.navigate('Profile');
-    } else {
+
+      setTimeout(() => {
+        setLoading(false);
+        handleClose();
+      }, 400);
+    } catch (e) {
+      setLoading(false);
       Toast.show({
         type: 'error',
         text1: 'Login Failed',
-        text2: res && res.message ? res.message : 'Invalid credentials',
+        text2: e.message || 'Something went wrong',
       });
     }
+  };
+
+  const handleForgotEmail = () => {
+    Toast.show({
+      type: 'info',
+      text1: 'Forgot Email',
+      text2: 'Please contact support to recover your email.',
+    });
   };
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={styles.overlayContainer}
     >
-      {/* Red Header Section */}
-      <View style={styles.headerSection}>
-        <Image
-          source={require('../../assets/Kruncheese.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <Text style={styles.tagline}>Your Way Everyday!</Text>
-      </View>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.wrapper}>
+          {/* Top backdrop - tap to dismiss */}
+          <TouchableOpacity
+            style={styles.backdrop}
+            activeOpacity={1}
+            onPress={handleClose}
+          />
 
-      {/* White Form Section */}
-      <View style={styles.formSection}>
-        <Text style={styles.welcomeTitle}>Welcome Back</Text>
-        <Text style={styles.welcomeSubtitle}>Please login to continue</Text>
+          {/* Bottom Sheet Card */}
+          <View style={styles.sheetContainer}>
+            {/* Close icon */}
+            <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
+              <X size={20} color="#666" />
+            </TouchableOpacity>
 
-        <View style={styles.inputContainer}>
-          <View style={styles.inputWrapper}>
-            <View style={styles.inputIconBox}>
-              <User size={20} color={theme.colors.primary} />
+            {/* Centered Logo */}
+            <View style={styles.logoSection}>
+              <Image
+                source={require('../../assets/Kruncheese.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+              <Text style={styles.tagline}>Your way Everyday!</Text>
             </View>
-            <TextInput
-              style={styles.input}
-              value={username}
-              onChangeText={setInputUsername}
-              placeholder="Username"
-              placeholderTextColor={theme.colors.textMuted || '#999'}
-              autoCapitalize="none"
-            />
-          </View>
 
-          <View style={styles.inputWrapper}>
-            <View style={styles.inputIconBox}>
-              <Lock size={20} color={theme.colors.primary} />
+            {/* Form Content */}
+            <View style={styles.formSection}>
+              <Text style={styles.title}>Enter Email</Text>
+              <Text style={styles.subtitle}>
+                You'll receive a 6 digits OTP for email verification
+              </Text>
+
+              {/* Email Input Field */}
+              <View style={styles.inputFieldBox}>
+                <Text style={styles.inputLabel}>Email</Text>
+                <TextInput
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Enter email address"
+                  placeholderTextColor="#A0A0A0"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+
+              {/* Forgot Email Link */}
+              <TouchableOpacity
+                onPress={handleForgotEmail}
+                style={styles.forgotWrap}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.forgotText}>Forgot Email?</Text>
+              </TouchableOpacity>
+
+              {/* Red Login Button */}
+              <TouchableOpacity
+                style={[styles.loginBtn, loading && styles.btnDisabled]}
+                onPress={handleLogin}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <Text style={styles.loginBtnText}>Login</Text>
+                )}
+              </TouchableOpacity>
             </View>
-            <TextInput
-              style={styles.input}
-              value={password}
-              onChangeText={setInputPassword}
-              placeholder="Password"
-              placeholderTextColor={theme.colors.textMuted || '#999'}
-              secureTextEntry
-            />
           </View>
         </View>
-
-        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-          <TouchableOpacity
-            style={styles.loginBtn}
-            onPress={handleLogin}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            activeOpacity={0.9}
-          >
-            <Text style={styles.loginBtnText}>Login</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
+      </TouchableWithoutFeedback>
       <Toast />
     </KeyboardAvoidingView>
   );
 };
 
-const getStyles = theme => StyleSheet.create({
-  container: {
+export default Login;
+
+const styles = StyleSheet.create({
+  overlayContainer: {
     flex: 1,
-    backgroundColor: theme.colors.primary,
+    backgroundColor: 'rgba(100, 0, 15, 0.75)',
   },
-  headerSection: {
-    flex: 0.35,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
+  wrapper: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  backdrop: {
+    flex: 1,
+  },
+  sheetContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: Platform.OS === 'ios' ? 44 : 32,
+    position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 10,
+    padding: 6,
+  },
+  logoSection: {
     alignItems: 'center',
-    paddingTop: 40,
+    marginBottom: 20,
+    marginTop: 10,
   },
   logo: {
     width: 200,
-    height: 80,
-    tintColor: '#fff',
+    height: 60,
+    tintColor: '#C40C0C',
   },
   tagline: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 14,
+    color: '#333333',
+    fontSize: 13,
     fontWeight: '500',
-    marginTop: 8,
     fontStyle: 'italic',
+    marginTop: 2,
   },
   formSection: {
-    flex: 0.65,
-    backgroundColor: theme.colors.background,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    paddingHorizontal: 24,
-    paddingTop: 36,
+    width: '100%',
   },
-  welcomeTitle: {
-    fontSize: 28,
+  title: {
+    fontSize: 22,
     fontWeight: '800',
-    color: theme.colors.text,
-    marginBottom: 6,
+    color: '#000000',
+    marginBottom: 4,
   },
-  welcomeSubtitle: {
-    fontSize: 15,
-    color: theme.colors.textSecondary || theme.colors.muted,
-    marginBottom: 32,
+  subtitle: {
+    fontSize: 13,
+    color: '#777777',
+    marginBottom: 24,
+    fontWeight: '400',
   },
-  inputContainer: {
-    gap: 16,
-    marginBottom: 28,
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surface || '#F8F8F8',
-    borderRadius: 14,
+  inputFieldBox: {
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    height: 56,
-    paddingHorizontal: 4,
+    borderColor: '#E0E0E0',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: '#FFFFFF',
+    marginBottom: 12,
   },
-  inputIconBox: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+  inputLabel: {
+    fontSize: 11,
+    color: '#444444',
+    fontWeight: '700',
+    marginBottom: 2,
   },
   input: {
-    flex: 1,
-    fontSize: 16,
-    color: theme.colors.text,
-    paddingRight: 16,
+    fontSize: 15,
+    color: '#000000',
+    paddingVertical: 2,
+    height: 36,
+  },
+  forgotWrap: {
+    alignSelf: 'flex-end',
+    marginBottom: 24,
+  },
+  forgotText: {
+    color: '#C40C0C',
+    fontSize: 14,
+    fontWeight: '700',
   },
   loginBtn: {
-    height: 56,
-    backgroundColor: theme.colors.primary,
-    borderRadius: 14,
+    height: 52,
+    backgroundColor: '#C40C0C',
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    ...theme.shadows?.large,
+    shadowColor: '#C40C0C',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  btnDisabled: {
+    opacity: 0.7,
   },
   loginBtnText: {
-    color: '#fff',
-    fontSize: 18,
+    color: '#FFFFFF',
+    fontSize: 17,
     fontWeight: '700',
-    letterSpacing: 0.5,
   },
 });
+

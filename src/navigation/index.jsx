@@ -22,6 +22,7 @@ import { Cart } from './screens/Cart';
 import OrderSuccess from './screens/OrderSuccess';
 import { LocationSelection } from './screens/LocationSelection';
 import { Checkout } from './screens/Checkout';
+import { Login } from './screens/Login';
 
 // custom components
 import { CustomDrawerContent } from '../components/CustomDrawerContent';
@@ -48,6 +49,16 @@ export function RootStackNavigator() {
     >
       <Stack.Screen name="LocationSelection" component={LocationSelection} />
       <Stack.Screen name="HomeTabs" component={Updates} />
+
+      <Stack.Screen
+        name="Login"
+        component={Login}
+        options={{
+          headerShown: false,
+          presentation: 'transparentModal',
+          animation: 'fade',
+        }}
+      />
 
       <Stack.Screen
         name="DealOptions"

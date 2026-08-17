@@ -1380,6 +1380,11 @@ export function DealOptions() {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}>
         <View style={styles.headerPanel}>
+          <Image
+            source={image ? { uri: image } : require('../../assets/dealsbanner.jpg.jpeg')}
+            style={styles.heroImage}
+            resizeMode="cover"
+          />
           <View style={styles.infoBox}>
             <Text style={styles.title}>{name}</Text>
             <Text style={styles.priceDisplay}>Rs {totalPrice.toFixed(0)}</Text>

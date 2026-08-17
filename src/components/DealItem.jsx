@@ -73,11 +73,11 @@ const DealItem = (props) => {
 
       {/* Right: Image + Add Button */}
       <View style={styles.imageSection}>
-        {image ? (
-          <Image source={{ uri: image }} style={styles.dealImage} />
-        ) : (
-          <View style={[styles.dealImage, styles.placeholder]} />
-        )}
+        <Image
+          source={image ? { uri: image } : require('../assets/dealsbanner.jpg.jpeg')}
+          style={styles.dealImage}
+          resizeMode="cover"
+        />
         <TouchableOpacity
           style={styles.addBtn}
           onPress={handleNavigateToModal}
