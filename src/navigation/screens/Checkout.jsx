@@ -125,8 +125,9 @@ export function Checkout() {
             email,
             address,
             instructions
+            },
+            source: 'web'
           }
-        }
       };
 
       const response = await axios.post(`${Config.BASE_URL}/orders`, payload);
