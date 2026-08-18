@@ -109,15 +109,9 @@ export function CustomDrawerContent({ navigation, ...props }) {
               <Text style={[styles.menuText, { color: textColor }]}>My Favourites</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Root', { screen: 'LoyaltyPoints' })} activeOpacity={0.7}>
-              <Award size={22} color={textColor} strokeWidth={2} />
-              <Text style={[styles.menuText, { color: textColor }]}>Loyalty Points</Text>
-            </TouchableOpacity>
+            
 
-            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Root', { screen: 'Wallet' })} activeOpacity={0.7}>
-              <Wallet size={22} color={textColor} strokeWidth={2} />
-              <Text style={[styles.menuText, { color: textColor }]}>Wallet Balance</Text>
-            </TouchableOpacity>
+            
           </>
         )}
 

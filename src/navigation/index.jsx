@@ -29,8 +29,8 @@ import { MyProfile } from './screens/MyProfile';
 import { MyAddresses } from './screens/MyAddresses';
 import { MyOrders } from './screens/MyOrders';
 import { MyFavourites } from './screens/MyFavourites';
-import { LoyaltyPoints } from './screens/LoyaltyPoints';
-import { Wallet } from './screens/Wallet';
+
+
 import { AccountDeletion } from './screens/AccountDeletion';
 
 // custom components
@@ -161,26 +161,8 @@ export function RootStackNavigator() {
           headerTintColor: '#fff',
         }}
       />
-      <Stack.Screen
-        name="LoyaltyPoints"
-        component={LoyaltyPoints}
-        options={{
-          headerShown: true,
-          title: 'Loyalty Points',
-          headerStyle: { backgroundColor: theme.colors.primary },
-          headerTintColor: '#fff',
-        }}
-      />
-      <Stack.Screen
-        name="Wallet"
-        component={Wallet}
-        options={{
-          headerShown: true,
-          title: 'Wallet Balance',
-          headerStyle: { backgroundColor: theme.colors.primary },
-          headerTintColor: '#fff',
-        }}
-      />
+      
+      
       <Stack.Screen
         name="AccountDeletion"
         component={AccountDeletion}

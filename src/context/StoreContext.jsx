@@ -14,6 +14,7 @@ import {
   getDeals,
   getDealDetails
 } from '../services/APIservice';
+import { apiClient } from '../services/APIservice';
 import Config from '../constants/Config';
 import getErrorMessage from '../utils/errorHelper';
 
@@ -412,6 +413,42 @@ const StoreContextProvider = ({ children }) => {
     setUsername(name);
   };
 
+  
+  const requestOtp = async (email) => {
+    try {
+      const company_id = Config.COMPANY_ID || selectedBranch?.company_id || 1;
+      const response = await apiClient.post('/customer/request-otp', {
+        company_id,
+        email
+      });
+      return { success: true, is_new: response.data.is_new };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Failed to send OTP' };
+    }
+  };
+
+  const verifyOtpAndLogin = async (data) => {
+    try {
+      const company_id = Config.COMPANY_ID || selectedBranch?.company_id || 1;
+      const response = await apiClient.post('/customer/verify-otp', {
+        company_id,
+        ...data
+      });
+      setCustomerInfo(response.data.customer);
+      await AsyncStorage.setItem('customerInfo', JSON.stringify(response.data.customer));
+      await AsyncStorage.setItem('krc_customer_token', response.data.token);
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Invalid OTP' };
+    }
+  };
+
+  const logoutUser = async () => {
+    setCustomerInfo(null);
+    await AsyncStorage.removeItem('customerInfo');
+    await AsyncStorage.removeItem('krc_customer_token');
+  };
+
   const updateCustomerInfo = async (info) => {
     setCustomerInfo(info);
     const name = info.name || '';
@@ -423,6 +460,7 @@ const StoreContextProvider = ({ children }) => {
       console.warn('Failed to save customer info', e);
     }
   };
+
 
   const updateOrderDetails = (details) => {
     setOrderDetails(details);
@@ -465,6 +503,9 @@ const StoreContextProvider = ({ children }) => {
         loginStub: loginUser,
         updateUsername,
         updateCustomerInfo,
+    requestOtp,
+    verifyOtpAndLogin,
+    logoutUser,
         updateOrderDetails,
         clearCustomerInfo,
       }}

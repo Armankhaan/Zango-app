@@ -1,14 +1,29 @@
 // src/services/APIservice.js
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Config from '../constants/Config';
 
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: Config.BASE_URL,
   timeout: 12000, // 12 second timeout — prevents indefinite hang on bad network
   headers: {
     'Accept': 'application/json',
   },
 });
+
+apiClient.interceptors.request.use(
+  async (config) => {
+    try {
+      const token = await AsyncStorage.getItem('krc_customer_token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (e) {}
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 
 /**
  * 1. Fetch all active regions and their underlying sub-regions
