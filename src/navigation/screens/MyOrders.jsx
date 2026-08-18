@@ -54,7 +54,7 @@ export function MyOrders() {
               </View>
               <View style={styles.cardBody}>
                 <Text style={styles.date}>{new Date(item.created_at).toLocaleDateString()} {new Date(item.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Text>
-                <Text style={styles.price}>Rs. {item.grand_total}</Text>
+                <Text style={styles.price}>Rs. {item.order_info?.totals?.grand_total || item.order_info?.subtotal || item.order_info?.total || item.grand_total || '0'}</Text>
               </View>
             </TouchableOpacity>
           )}
