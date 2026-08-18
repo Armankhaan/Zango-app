@@ -19,7 +19,7 @@ import { User, Phone, Mail, MapPin, CreditCard } from 'lucide-react-native';
 
 export function Checkout() {
   const navigation = useNavigation();
-  const { cartItems, orderDetails, clearCart, selectedBranch } = useContext(StoreContext);
+  const { cartItems, orderDetails, clearCart, selectedBranch, customerInfo } = useContext(StoreContext);
   const { theme } = useContext(ThemeContext);
   const styles = getStyles(theme);
 
@@ -31,6 +31,18 @@ export function Checkout() {
   const [instructions, setInstructions] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (customerInfo) {
+      if (!name) setName(customerInfo.first_name ? `${customerInfo.first_name} ${customerInfo.last_name || ''}`.trim() : customerInfo.name || '');
+      if (!phone) setPhone(customerInfo.phone || customerInfo.phone_number || '');
+      if (!email) setEmail(customerInfo.email || '');
+      if (!address && customerInfo.addresses && customerInfo.addresses.length > 0) {
+        setAddress(customerInfo.addresses[0].address || '');
+      }
+    }
+  }, [customerInfo]);
+
 
   const subtotal = Object.values(cartItems).reduce(
     (sum, item) => sum + (parseFloat(item.price) || 0) * (item.quantity || 1),
