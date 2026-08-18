@@ -24,6 +24,15 @@ import { LocationSelection } from './screens/LocationSelection';
 import { Checkout } from './screens/Checkout';
 import { Login } from './screens/Login';
 
+// User Screens
+import { MyProfile } from './screens/MyProfile';
+import { MyAddresses } from './screens/MyAddresses';
+import { MyOrders } from './screens/MyOrders';
+import { MyFavourites } from './screens/MyFavourites';
+import { LoyaltyPoints } from './screens/LoyaltyPoints';
+import { Wallet } from './screens/Wallet';
+import { AccountDeletion } from './screens/AccountDeletion';
+
 // custom components
 import { CustomDrawerContent } from '../components/CustomDrawerContent';
 
@@ -109,6 +118,77 @@ export function RootStackNavigator() {
         component={OrderSuccess}
         options={{
           headerShown: false,
+        }}
+      />
+
+      <Stack.Screen
+        name="MyProfile"
+        component={MyProfile}
+        options={{
+          headerShown: true,
+          title: 'My Profile',
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: '#fff',
+        }}
+      />
+      <Stack.Screen
+        name="MyAddresses"
+        component={MyAddresses}
+        options={{
+          headerShown: true,
+          title: 'My Addresses',
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: '#fff',
+        }}
+      />
+      <Stack.Screen
+        name="MyOrders"
+        component={MyOrders}
+        options={{
+          headerShown: true,
+          title: 'My Orders',
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: '#fff',
+        }}
+      />
+      <Stack.Screen
+        name="MyFavourites"
+        component={MyFavourites}
+        options={{
+          headerShown: true,
+          title: 'My Favourites',
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: '#fff',
+        }}
+      />
+      <Stack.Screen
+        name="LoyaltyPoints"
+        component={LoyaltyPoints}
+        options={{
+          headerShown: true,
+          title: 'Loyalty Points',
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: '#fff',
+        }}
+      />
+      <Stack.Screen
+        name="Wallet"
+        component={Wallet}
+        options={{
+          headerShown: true,
+          title: 'Wallet Balance',
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: '#fff',
+        }}
+      />
+      <Stack.Screen
+        name="AccountDeletion"
+        component={AccountDeletion}
+        options={{
+          headerShown: true,
+          title: 'Account Deletion',
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: '#fff',
         }}
       />
 

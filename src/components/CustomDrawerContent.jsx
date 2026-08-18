@@ -14,7 +14,7 @@ import { DrawerActions } from '@react-navigation/native';
 import { StoreContext } from '../context/StoreContext';
 import { ThemeContext } from '../context/ThemeContext';
 import Toast from 'react-native-toast-message';
-import { Headphones, LogIn, LogOut, Bell } from 'lucide-react-native';
+import { Headphones, LogIn, LogOut, Bell, MapPin, ClipboardList, Heart, UserX, Award, Wallet, User } from 'lucide-react-native';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 
 export function CustomDrawerContent({ navigation, ...props }) {
@@ -63,14 +63,64 @@ export function CustomDrawerContent({ navigation, ...props }) {
       showsVerticalScrollIndicator={false}
     >
       {/* Drawer Top Header */}
-      <View style={styles.header}>
-        <Text style={[styles.greetingText, { color: textColor }]}>
-          Hi, {customerInfo?.name || customerInfo?.username || 'Guest'}
-        </Text>
-      </View>
+      <TouchableOpacity 
+        style={styles.header} 
+        activeOpacity={0.7} 
+        onPress={() => customerInfo && navigation.navigate('Root', { screen: 'MyProfile' })}
+      >
+        {customerInfo ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+            <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#c00000', justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ color: 'white', fontSize: 24, fontWeight: '900' }}>
+                {(customerInfo.name || customerInfo.username || 'G').substring(0, 1).toUpperCase()}
+              </Text>
+            </View>
+            <View>
+              <Text style={[styles.greetingText, { color: textColor }]}>
+                {customerInfo.name || customerInfo.username}
+              </Text>
+              {customerInfo.phone && <Text style={{ color: '#666', fontSize: 13, marginTop: 4, fontWeight: '600' }}>{customerInfo.phone}</Text>}
+            </View>
+          </View>
+        ) : (
+          <Text style={[styles.greetingText, { color: textColor }]}>
+            Hi, Guest
+          </Text>
+        )}
+      </TouchableOpacity>
 
       {/* Menu List */}
       <View style={styles.menuList}>
+        
+        {customerInfo && (
+          <>
+            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Root', { screen: 'MyAddresses' })} activeOpacity={0.7}>
+              <MapPin size={22} color={textColor} strokeWidth={2} />
+              <Text style={[styles.menuText, { color: textColor }]}>My Addresses</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Root', { screen: 'MyOrders' })} activeOpacity={0.7}>
+              <ClipboardList size={22} color={textColor} strokeWidth={2} />
+              <Text style={[styles.menuText, { color: textColor }]}>My Orders</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Root', { screen: 'MyFavourites' })} activeOpacity={0.7}>
+              <Heart size={22} color={textColor} strokeWidth={2} />
+              <Text style={[styles.menuText, { color: textColor }]}>My Favourites</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Root', { screen: 'LoyaltyPoints' })} activeOpacity={0.7}>
+              <Award size={22} color={textColor} strokeWidth={2} />
+              <Text style={[styles.menuText, { color: textColor }]}>Loyalty Points</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Root', { screen: 'Wallet' })} activeOpacity={0.7}>
+              <Wallet size={22} color={textColor} strokeWidth={2} />
+              <Text style={[styles.menuText, { color: textColor }]}>Wallet Balance</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
         {/* Support Center */}
         <TouchableOpacity
           style={styles.menuItem}
@@ -96,6 +146,13 @@ export function CustomDrawerContent({ navigation, ...props }) {
             {customerInfo ? 'Logout' : 'Login'}
           </Text>
         </TouchableOpacity>
+
+        {customerInfo && (
+          <TouchableOpacity style={styles.menuItem} activeOpacity={0.7} onPress={() => navigation.navigate('Root', { screen: 'AccountDeletion' })}>
+            <UserX size={22} color={textColor} strokeWidth={2} />
+            <Text style={[styles.menuText, { color: textColor }]}>Req Account Deletion</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Offer Notifications */}
         <View style={styles.menuItemWithToggle}>
