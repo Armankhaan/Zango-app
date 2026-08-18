@@ -9,6 +9,7 @@ import {
   ScrollView,
   Platform,
   Image,
+  Dimensions,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { StoreContext } from '../../context/StoreContext';
@@ -267,14 +268,17 @@ const getStyles = (theme) => StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   logoSection: {
-    flex: 0.5,
+    flex: 0.45,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: theme.colors.background,
+    paddingHorizontal: 20,
   },
   logo: {
-    width: 220,
-    height: 90,
+    width: Math.min(Dimensions.get('window').width * 0.65, 280),
+    maxWidth: '85%',
+    aspectRatio: 4,
+    height: undefined,
   },
   welcomeCard: {
     flex: 0.5,

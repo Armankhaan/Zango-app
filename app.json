@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "krunceeseapp",
-    "slug": "krunceeseapp",
+    "name": "kruncheese",
+    "slug": "kruncheese",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
-    "scheme": "krunceeseapp",
+    "scheme": "kruncheese",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.satya164.reactnavigationtemplate"
@@ -28,14 +28,16 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#ffffff",
-          "image": "./assets/splash-icon.png"
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain"
         }
       ],
       "react-native-edge-to-edge"
     ],
     "extra": {
       "eas": {
-        "projectId": "b79b65f8-9a3c-4c43-ac5a-97f119b795e3"
+        "projectId": "fc90f8d7-dda2-42d6-ba9c-517d9742ef52"
       }
     }
   }

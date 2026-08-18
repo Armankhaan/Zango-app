@@ -49,7 +49,7 @@ export function CustomDrawerContent({ navigation, ...props }) {
   };
 
   const openSocial = (url) => {
-    Linking.openURL(url).catch(() => {});
+    Linking.openURL(url).catch(() => { });
   };
 
   const isLight = !theme.dark;
@@ -63,9 +63,9 @@ export function CustomDrawerContent({ navigation, ...props }) {
       showsVerticalScrollIndicator={false}
     >
       {/* Drawer Top Header */}
-      <TouchableOpacity 
-        style={styles.header} 
-        activeOpacity={0.7} 
+      <TouchableOpacity
+        style={styles.header}
+        activeOpacity={0.7}
         onPress={() => customerInfo && navigation.navigate('Root', { screen: 'MyProfile' })}
       >
         {customerInfo ? (
@@ -91,27 +91,27 @@ export function CustomDrawerContent({ navigation, ...props }) {
 
       {/* Menu List */}
       <View style={styles.menuList}>
-        
+
         {customerInfo && (
           <>
             <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Root', { screen: 'MyAddresses' })} activeOpacity={0.7}>
               <MapPin size={22} color={textColor} strokeWidth={2} />
               <Text style={[styles.menuText, { color: textColor }]}>My Addresses</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Root', { screen: 'MyOrders' })} activeOpacity={0.7}>
               <ClipboardList size={22} color={textColor} strokeWidth={2} />
               <Text style={[styles.menuText, { color: textColor }]}>My Orders</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Root', { screen: 'MyFavourites' })} activeOpacity={0.7}>
               <Heart size={22} color={textColor} strokeWidth={2} />
               <Text style={[styles.menuText, { color: textColor }]}>My Favourites</Text>
             </TouchableOpacity>
 
-            
 
-            
+
+
           </>
         )}
 
@@ -233,22 +233,6 @@ export function CustomDrawerContent({ navigation, ...props }) {
           </TouchableOpacity>
         </View>
 
-        {/* Powered by blink logo */}
-        <View style={styles.blinkBrandRow}>
-          <View style={styles.blinkLogoShape}>
-            <Svg width="36" height="24" viewBox="0 0 36 24">
-              <Circle cx="12" cy="8" r="7" fill="#00C4EE" />
-              <Circle cx="12" cy="16" r="7" fill="#E80070" />
-            </Svg>
-          </View>
-          <View style={styles.blinkTextWrap}>
-            <Text style={styles.poweredByText}>Powered by</Text>
-            <Text style={styles.blinkTitle}>blink</Text>
-          </View>
-        </View>
-
-        {/* Version */}
-        <Text style={styles.versionText}>Version 3.0+2</Text>
       </View>
     </DrawerContentScrollView>
   );

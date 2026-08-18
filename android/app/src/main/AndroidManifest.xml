@@ -26,6 +26,8 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="krunceeseapp"/>
         <data android:scheme="exp+krunceeseapp"/>
+        <data android:scheme="kruncheese"/>
+        <data android:scheme="exp+kruncheese"/>
       </intent-filter>
     </activity>
   </application>

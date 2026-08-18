@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   TouchableWithoutFeedback,
   Keyboard,
+  Dimensions,
 } from 'react-native';
 import { StoreContext } from '../../context/StoreContext';
 import { ThemeContext } from '../../context/ThemeContext';
@@ -217,7 +218,12 @@ const styles = StyleSheet.create({
   closeBtn: { position: 'absolute', top: 16, right: 16, zIndex: 10, padding: 6 },
   backBtn: { position: 'absolute', top: 16, left: 16, zIndex: 10, padding: 6 },
   logoSection: { alignItems: 'center', marginBottom: 20, marginTop: 10 },
-  logo: { width: 200, height: 60, tintColor: '#C40C0C' },
+  logo: {
+    width: Math.min(Dimensions.get('window').width * 0.55, 220),
+    maxWidth: '80%',
+    aspectRatio: 4,
+    height: undefined,
+  },
   tagline: { color: '#333333', fontSize: 13, fontWeight: '500', fontStyle: 'italic', marginTop: 2 },
   formSection: { width: '100%' },
   title: { fontSize: 22, fontWeight: '800', color: '#000000', marginBottom: 4 },
