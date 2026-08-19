@@ -1,0 +1,312 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Modal,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  TextInput,
+  Platform,
+  Dimensions,
+} from 'react-native';
+import { WebView } from 'react-native-webview';
+import * as Location from 'expo-location';
+
+const { width, height } = Dimensions.get('window');
+
+const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionName = '', theme }) => {
+  const [addressText, setAddressText] = useState(defaultAddress);
+  const [coordinates, setCoordinates] = useState({ lat: 31.5204, lng: 74.3587 });
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
+  const webviewRef = useRef(null);
+
+  useEffect(() => {
+    if (visible) {
+      setAddressText(defaultAddress);
+    }
+  }, [visible, defaultAddress]);
+
+  const handleUseCurrentLocation = async () => {
+    setIsFetchingLocation(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access location was denied');
+        setIsFetchingLocation(false);
+        return;
+      }
+      const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const { latitude, longitude } = location.coords;
+      setCoordinates({ lat: latitude, lng: longitude });
+      
+      // Tell webview to move map
+      if (webviewRef.current) {
+        webviewRef.current.injectJavaScript(`
+          if (window.updateMapCenter) {
+            window.updateMapCenter(${latitude}, ${longitude});
+          }
+          true;
+        `);
+      }
+    } catch (error) {
+      alert('Could not fetch location.');
+    } finally {
+      setIsFetchingLocation(false);
+    }
+  };
+
+  const handleWebViewMessage = (event) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === 'MARKER_MOVED') {
+        setCoordinates({ lat: data.lat, lng: data.lng });
+      }
+    } catch (e) {
+      console.warn('Error parsing webview message', e);
+    }
+  };
+
+  const mapHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <style>
+        body { margin: 0; padding: 0; }
+        #map { width: 100vw; height: 100vh; }
+        .crosshair-btn {
+          position: absolute;
+          bottom: 20px;
+          right: 20px;
+          background: white;
+          border: 2px solid rgba(0,0,0,0.2);
+          border-radius: 8px;
+          width: 40px;
+          height: 40px;
+          z-index: 1000;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          cursor: pointer;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .crosshair-btn svg { width: 20px; height: 20px; color: #444; }
+      </style>
+    </head>
+    <body>
+      <div id="map"></div>
+      
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+      <script>
+        var map = L.map('map', { zoomControl: false }).setView([${coordinates.lat}, ${coordinates.lng}], 15);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19,
+        }).addTo(map);
+
+        var customIcon = L.icon({
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41]
+        });
+
+        var marker = L.marker([${coordinates.lat}, ${coordinates.lng}], { 
+          icon: customIcon,
+          draggable: true 
+        }).addTo(map);
+
+        function sendCoords(lat, lng) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'MARKER_MOVED', lat: lat, lng: lng }));
+        }
+
+        marker.on('dragend', function(e) {
+          var position = marker.getLatLng();
+          map.panTo(position);
+          sendCoords(position.lat, position.lng);
+        });
+
+        window.updateMapCenter = function(lat, lng) {
+          var newLatLng = new L.LatLng(lat, lng);
+          marker.setLatLng(newLatLng);
+          map.panTo(newLatLng);
+          sendCoords(lat, lng);
+        };
+      </script>
+    </body>
+    </html>
+  `;
+
+  const isLight = !theme?.dark;
+  const cardBg = isLight ? '#FFFFFF' : '#1E1E1E';
+  const borderColor = isLight ? '#E0E0E0' : '#333333';
+  const RED = '#D32F2F';
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent={true}>
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { backgroundColor: cardBg }]}>
+          
+          <View style={styles.header}>
+            <Text style={[styles.title, { color: theme?.colors?.text || '#000' }]}>Add new Address</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+              <Text style={styles.closeText}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.inputSection}>
+            <Text style={[styles.label, { color: theme?.colors?.textSecondary || '#666' }]}>
+              Address (with post code if applicable)
+            </Text>
+            <TextInput
+              style={[styles.input, { borderColor, color: theme?.colors?.text || '#000' }]}
+              placeholder="Enter your complete street address"
+              placeholderTextColor="#999"
+              value={addressText}
+              onChangeText={setAddressText}
+            />
+
+            <Text style={[styles.label, { color: theme?.colors?.textSecondary || '#666', marginTop: 12 }]}>
+              Region
+            </Text>
+            <TextInput
+              style={[styles.input, { borderColor, backgroundColor: isLight ? '#F5F5F5' : '#2A2A2A', color: '#888' }]}
+              value={regionName || 'Region not selected'}
+              editable={false}
+            />
+            <Text style={styles.helpText}>To change your region, go back to Location Selection.</Text>
+          </View>
+
+          <View style={styles.mapContainer}>
+            <WebView
+              ref={webviewRef}
+              source={{ html: mapHtml }}
+              style={{ flex: 1 }}
+              scrollEnabled={false}
+              javaScriptEnabled={true}
+              onMessage={handleWebViewMessage}
+            />
+            <TouchableOpacity 
+              style={styles.crosshairNativeBtn} 
+              onPress={handleUseCurrentLocation}
+              disabled={isFetchingLocation}
+            >
+              {isFetchingLocation ? (
+                <ActivityIndicator size="small" color={RED} />
+              ) : (
+                <Text style={{ fontSize: 20 }}>📍</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.saveBtn, { backgroundColor: RED }]}
+            onPress={() => onSave({
+              address: addressText,
+              latitude: coordinates.lat,
+              longitude: coordinates.lng,
+              regionName
+            })}
+          >
+            <Text style={styles.saveBtnText}>Save Address</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    height: height * 0.85,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeText: {
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '700',
+  },
+  inputSection: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  input: {
+    borderWidth: 1.5,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+  },
+  helpText: {
+    fontSize: 11,
+    color: '#999',
+    marginTop: 4,
+  },
+  mapContainer: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: '#E0E0E0',
+    marginBottom: 20,
+    position: 'relative',
+  },
+  crosshairNativeBtn: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    backgroundColor: '#fff',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  saveBtn: {
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: Platform.OS === 'ios' ? 20 : 0,
+  },
+  saveBtnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+});
+
+export default AddressModal;

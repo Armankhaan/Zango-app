@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import * as Device from 'expo-device';
 import * as Application from 'expo-application';
+import * as Location from 'expo-location';
 import {
   getTradeAreas,
   resolveBranch,
@@ -64,7 +65,8 @@ const StoreContextProvider = ({ children }) => {
           savedCustomer,
           savedUsername,
           savedSubRegion,
-          savedBranch
+          savedBranch,
+          savedLocationTimestamp
         ] = await Promise.all([
           safeGetItem('cartItems'),
           safeGetItem('menuData'),
@@ -72,6 +74,7 @@ const StoreContextProvider = ({ children }) => {
           safeGetItem('username'),
           safeGetItem('selectedSubRegion'),
           safeGetItem('selectedBranch'),
+          safeGetItem('locationTimestamp')
         ]);
 
         if (cachedCart) setCartItems(JSON.parse(cachedCart));
@@ -88,8 +91,14 @@ const StoreContextProvider = ({ children }) => {
 
         if (savedSubRegion) setSelectedSubRegion(JSON.parse(savedSubRegion));
 
+        let isExpired = false;
+        if (savedLocationTimestamp) {
+          const hoursPassed = (Date.now() - parseInt(savedLocationTimestamp, 10)) / (1000 * 60 * 60);
+          if (hoursPassed > 12) isExpired = true;
+        }
+
         let activeBranch = null;
-        if (savedBranch) {
+        if (savedBranch && !isExpired) {
           try {
             activeBranch = JSON.parse(savedBranch);
             // If the cached branch belongs to a different company, clear it to prevent wrong branch loading
@@ -105,6 +114,32 @@ const StoreContextProvider = ({ children }) => {
             console.warn('Failed to parse saved branch', e);
           }
         }
+
+        if (!activeBranch) {
+          try {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status === 'granted') {
+              const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+              const { latitude, longitude } = location.coords;
+              const resp = await apiClient.post(`/trade-areas/resolve-by-location`, { latitude, longitude });
+              if (resp.data && resp.data.status && resp.data.data) {
+                const data = resp.data.data;
+                if (data.branch) {
+                  activeBranch = data.branch;
+                  await AsyncStorage.setItem('selectedBranch', JSON.stringify(activeBranch));
+                  await AsyncStorage.setItem('locationTimestamp', Date.now().toString());
+                  if (data.trade_area) {
+                    setSelectedSubRegion(data.trade_area);
+                    await AsyncStorage.setItem('selectedSubRegion', JSON.stringify(data.trade_area));
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            console.warn('Auto location failed:', err);
+          }
+        }
+
         setSelectedBranch(activeBranch);
 
         const compIdToUse = Config.COMPANY_ID;
@@ -341,6 +376,7 @@ const StoreContextProvider = ({ children }) => {
         const branch = branchResponse.data.branch;
         setSelectedBranch(branch);
         await AsyncStorage.setItem('selectedBranch', JSON.stringify(branch));
+        await AsyncStorage.setItem('locationTimestamp', Date.now().toString());
 
         await fetchMenu(branch.id, Config.COMPANY_ID);
       }
@@ -358,6 +394,7 @@ const StoreContextProvider = ({ children }) => {
       await AsyncStorage.removeItem('cartItems');
       setSelectedBranch(branch);
       await AsyncStorage.setItem('selectedBranch', JSON.stringify(branch));
+      await AsyncStorage.setItem('locationTimestamp', Date.now().toString());
       await fetchMenu(branch.id, branch.company_id);
     } catch (error) {
       console.error("Error setting branch directly:", error);

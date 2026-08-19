@@ -16,6 +16,7 @@ import { ThemeContext } from '../../context/ThemeContext';
 import Config from '../../constants/Config';
 import getErrorMessage from '../../utils/errorHelper';
 import { User, Phone, Mail, MapPin, CreditCard } from 'lucide-react-native';
+import AddressModal from '../../components/AddressModal';
 
 export function Checkout() {
   const navigation = useNavigation();
@@ -31,6 +32,9 @@ export function Checkout() {
   const [instructions, setInstructions] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('COD');
   const [loading, setLoading] = useState(false);
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
 
   React.useEffect(() => {
     if (customerInfo) {
@@ -39,6 +43,8 @@ export function Checkout() {
       if (!email) setEmail(customerInfo.email || '');
       if (!address && customerInfo.addresses && customerInfo.addresses.length > 0) {
         setAddress(customerInfo.addresses[0].address || '');
+        setLatitude(customerInfo.addresses[0].latitude || null);
+        setLongitude(customerInfo.addresses[0].longitude || null);
       }
     }
   }, [customerInfo]);
@@ -124,9 +130,11 @@ export function Checkout() {
             phone,
             email,
             address,
+            latitude,
+            longitude,
             instructions
             },
-            source: 'web'
+            source: 'krunceese'
           }
       };
 
@@ -197,24 +205,64 @@ export function Checkout() {
         {/* Delivery Address Section */}
         {orderDetails?.orderType === 'Delivery' && (
           <View style={styles.addressContainer}>
-            <View style={styles.addressCard}>
-              <View style={styles.addressLeft}>
-                <View style={styles.addressIconWrap}>
-                  <MapPin size={22} color={theme.colors.primary} />
-                </View>
-                <View style={styles.addressTextColumn}>
-                  <Text style={styles.addressTitle}>Delivery Address</Text>
-                  <TextInput
-                    style={styles.addressInput}
-                    placeholder="Tap to add address"
-                    placeholderTextColor={theme.colors.textMuted || '#999'}
-                    value={address}
-                    onChangeText={setAddress}
-                    multiline
-                  />
-                </View>
-              </View>
+            <View style={styles.sectionHeader}>
+              <MapPin size={20} color={theme.colors.primary} />
+              <Text style={styles.sectionTitle}>
+                {customerInfo ? 'Your Delivery Addresses' : 'Delivery Address'}
+              </Text>
             </View>
+
+            {customerInfo && customerInfo.addresses && customerInfo.addresses.length > 0 ? (
+              <View style={styles.savedAddressesList}>
+                {customerInfo.addresses.map((addr, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={[
+                      styles.savedAddressCard,
+                      address === addr.address && styles.savedAddressCardSelected
+                    ]}
+                    onPress={() => {
+                      setAddress(addr.address);
+                      setLatitude(addr.latitude);
+                      setLongitude(addr.longitude);
+                    }}
+                  >
+                    <Text style={[styles.savedAddressText, address === addr.address && { color: theme.colors.primary, fontWeight: '700' }]}>
+                      {addr.address}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : null}
+
+            {(!customerInfo || (!customerInfo?.addresses?.find(a => a.address === address) && address)) && (
+              <TouchableOpacity
+                style={styles.addressCard}
+                onPress={() => setIsAddressModalOpen(true)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.addressLeft}>
+                  <View style={styles.addressIconWrap}>
+                    <MapPin size={22} color={theme.colors.primary} />
+                  </View>
+                  <View style={styles.addressTextColumn}>
+                    <Text style={styles.addressTitle}>
+                      {address ? 'Selected Address' : 'No Address Selected'}
+                    </Text>
+                    <Text style={styles.addressInput}>
+                      {address ? address : 'Tap to select location on map'}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity 
+              style={styles.addNewAddressBtn} 
+              onPress={() => setIsAddressModalOpen(true)}
+            >
+              <Text style={styles.addNewAddressText}>+ Add new Address</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -276,6 +324,20 @@ export function Checkout() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <AddressModal
+        visible={isAddressModalOpen}
+        onClose={() => setIsAddressModalOpen(false)}
+        defaultAddress={address}
+        regionName={selectedBranch?.name || ''}
+        theme={theme}
+        onSave={(data) => {
+          setAddress(data.address);
+          setLatitude(data.latitude);
+          setLongitude(data.longitude);
+          setIsAddressModalOpen(false);
+        }}
+      />
     </View>
   );
 }
@@ -448,10 +510,42 @@ const getStyles = (theme) => StyleSheet.create({
   },
   addressInput: {
     fontSize: 14,
+    color: theme.colors.textSecondary || '#666',
+    paddingTop: 2,
+  },
+  savedAddressesList: {
+    gap: 10,
+    marginBottom: 12,
+  },
+  savedAddressCard: {
+    backgroundColor: theme.colors.surface || '#F8F8F8',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    padding: 16,
+  },
+  savedAddressCardSelected: {
+    borderColor: theme.colors.primary,
+    backgroundColor: 'rgba(211, 47, 47, 0.05)',
+  },
+  savedAddressText: {
+    fontSize: 14,
     color: theme.colors.text,
-    padding: 0,
-    minHeight: 24,
-    textAlignVertical: 'top',
+    lineHeight: 20,
+  },
+  addNewAddressBtn: {
+    marginTop: 12,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    borderRadius: 12,
+    borderStyle: 'dashed',
+  },
+  addNewAddressText: {
+    color: theme.colors.primary,
+    fontSize: 14,
+    fontWeight: '700',
   },
   bottomBar: {
     position: 'absolute',

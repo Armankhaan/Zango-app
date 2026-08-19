@@ -12,6 +12,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import * as Location from 'expo-location';
+import { apiClient } from '../../services/APIservice';
 import { StoreContext } from '../../context/StoreContext';
 import { ThemeContext } from '../../context/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
@@ -26,6 +28,7 @@ export function LocationSelection() {
   const [selectedCityIdx, setSelectedCityIdx] = useState(null);
   const [selectedAreaIdx, setSelectedAreaIdx] = useState(null);
   const [selectedBranchIdx, setSelectedBranchIdx] = useState(null);
+  const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
@@ -65,6 +68,52 @@ export function LocationSelection() {
       index: 0,
       routes: [{ name: 'HomeTabs' }],
     });
+  };
+
+  const handleUseCurrentLocation = async () => {
+    setIsFetchingLocation(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access location was denied');
+        setIsFetchingLocation(false);
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const { latitude, longitude } = location.coords;
+      const resp = await apiClient.post(`/trade-areas/resolve-by-location`, { latitude, longitude });
+
+      if (resp.data && resp.data.status && resp.data.data) {
+        const data = resp.data.data;
+        const foundRegionId = data.trade_area?.region?.id || null;
+        const foundSubRegionId = data.trade_area?.id || null;
+        const foundBranchId = data.branch?.id || null;
+
+        if (foundRegionId) {
+          const cIdx = cities.findIndex(c => c.id === foundRegionId);
+          if (cIdx !== -1) {
+            setSelectedCityIdx(cIdx);
+            
+            if (orderType === 'Delivery' && foundSubRegionId) {
+              const subRegions = cities[cIdx].sub_regions || [];
+              const sIdx = subRegions.findIndex(s => s.id === foundSubRegionId);
+              if (sIdx !== -1) setSelectedAreaIdx(sIdx);
+            } else if (orderType === 'Pick-Up' && foundBranchId) {
+              const sr = cities[cIdx].sub_regions || [];
+              const rBranches = Array.from(new Map(sr.filter(s => s.branch).map(s => [s.branch.id, s.branch])).values());
+              const bIdx = rBranches.findIndex(b => b.id === foundBranchId);
+              if (bIdx !== -1) setSelectedBranchIdx(bIdx);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      alert('Could not find a branch near your location.');
+      console.warn(err);
+    } finally {
+      setIsFetchingLocation(false);
+    }
   };
 
   const styles = getStyles(theme);
@@ -158,6 +207,18 @@ export function LocationSelection() {
 
         <Text style={styles.title}>Please select your location</Text>
         <Text style={styles.subtitle}>Choose your city and area to find the nearest branch</Text>
+
+        <TouchableOpacity 
+          style={styles.currentLocationBtn}
+          onPress={handleUseCurrentLocation}
+          disabled={isFetchingLocation}
+        >
+          {isFetchingLocation ? (
+             <ActivityIndicator size="small" color={theme.colors.primary} />
+          ) : (
+            <Text style={styles.currentLocationBtnText}>Use Current Location</Text>
+          )}
+        </TouchableOpacity>
 
         {/* City / Region Picker */}
         <View style={styles.pickerSection}>
@@ -427,8 +488,22 @@ const getStyles = (theme) => StyleSheet.create({
     fontSize: 14,
     color: theme.colors.textSecondary || theme.colors.muted,
     textAlign: 'center',
-    marginBottom: 28,
+    marginBottom: 20,
     lineHeight: 20,
+  },
+  currentLocationBtn: {
+    backgroundColor: theme.colors.primaryLight || '#FFCDD2',
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '40',
+  },
+  currentLocationBtnText: {
+    color: theme.colors.primary,
+    fontSize: 15,
+    fontWeight: '700',
   },
   pickerSection: {
     marginBottom: 20,
