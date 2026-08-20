@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import {
   Modal,
   View,
@@ -12,10 +12,12 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
+import { StoreContext } from '../context/StoreContext';
 
 const { width, height } = Dimensions.get('window');
 
 const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionName = '', theme }) => {
+  const { mapboxToken } = useContext(StoreContext);
   const [addressText, setAddressText] = useState(defaultAddress);
   const [coordinates, setCoordinates] = useState({ lat: 31.5204, lng: 74.3587 });
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
@@ -72,67 +74,46 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
     <html>
     <head>
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+      <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
       <style>
         body { margin: 0; padding: 0; }
         #map { width: 100vw; height: 100vh; }
-        .crosshair-btn {
-          position: absolute;
-          bottom: 20px;
-          right: 20px;
-          background: white;
-          border: 2px solid rgba(0,0,0,0.2);
-          border-radius: 8px;
-          width: 40px;
-          height: 40px;
-          z-index: 1000;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          cursor: pointer;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .crosshair-btn svg { width: 20px; height: 20px; color: #444; }
       </style>
     </head>
     <body>
-      <div id="map"></div>
+      ${mapboxToken ? '<div id="map"></div>' : '<div style="padding:20px; text-align:center; font-family:sans-serif; color:#666;">Map cannot be loaded. Mapbox API key is missing.</div>'}
       
-      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
       <script>
-        var map = L.map('map', { zoomControl: false }).setView([${coordinates.lat}, ${coordinates.lng}], 15);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          maxZoom: 19,
-        }).addTo(map);
+        ${mapboxToken ? `
+          mapboxgl.accessToken = '${mapboxToken}';
+          var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: [${coordinates.lng}, ${coordinates.lat}],
+            zoom: 15
+          });
 
-        var customIcon = L.icon({
-          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-          iconSize: [25, 41],
-          iconAnchor: [12, 41]
-        });
+          var marker = new mapboxgl.Marker({ draggable: true, color: '#D32F2F' })
+            .setLngLat([${coordinates.lng}, ${coordinates.lat}])
+            .addTo(map);
 
-        var marker = L.marker([${coordinates.lat}, ${coordinates.lng}], { 
-          icon: customIcon,
-          draggable: true 
-        }).addTo(map);
+          function sendCoords(lat, lng) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'MARKER_MOVED', lat: lat, lng: lng }));
+          }
 
-        function sendCoords(lat, lng) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'MARKER_MOVED', lat: lat, lng: lng }));
-        }
+          marker.on('dragend', function() {
+            var lngLat = marker.getLngLat();
+            map.flyTo({ center: lngLat });
+            sendCoords(lngLat.lat, lngLat.lng);
+          });
 
-        marker.on('dragend', function(e) {
-          var position = marker.getLatLng();
-          map.panTo(position);
-          sendCoords(position.lat, position.lng);
-        });
-
-        window.updateMapCenter = function(lat, lng) {
-          var newLatLng = new L.LatLng(lat, lng);
-          marker.setLatLng(newLatLng);
-          map.panTo(newLatLng);
-          sendCoords(lat, lng);
-        };
+          window.updateMapCenter = function(lat, lng) {
+            marker.setLngLat([lng, lat]);
+            map.flyTo({ center: [lng, lat], zoom: 15 });
+            sendCoords(lat, lng);
+          };
+        ` : ''}
       </script>
     </body>
     </html>

@@ -20,7 +20,7 @@ import AddressModal from '../../components/AddressModal';
 
 export function Checkout() {
   const navigation = useNavigation();
-  const { cartItems, orderDetails, clearCart, selectedBranch, customerInfo } = useContext(StoreContext);
+  const { cartItems, orderDetails, clearCart, selectedBranch, customerInfo, handleSelectBranch } = useContext(StoreContext);
   const { theme } = useContext(ThemeContext);
   const styles = getStyles(theme);
 
@@ -331,11 +331,35 @@ export function Checkout() {
         defaultAddress={address}
         regionName={selectedBranch?.name || ''}
         theme={theme}
-        onSave={(data) => {
-          setAddress(data.address);
-          setLatitude(data.latitude);
-          setLongitude(data.longitude);
-          setIsAddressModalOpen(false);
+        onSave={async (data) => {
+          try {
+            // Verify with backend that this location is within our delivery radius
+            const resp = await axios.post(`${Config.BASE_URL}/trade-areas/resolve-by-location`, {
+              latitude: data.latitude,
+              longitude: data.longitude
+            });
+            
+            if (!resp.data.status) {
+              Alert.alert('Error', 'This location is not serviceable.');
+              return;
+            }
+
+            // Automatically update the active branch if the location is closer to another branch
+            if (resp.data.data && resp.data.data.branch) {
+              const resolvedBranch = resp.data.data.branch;
+              if (!selectedBranch || selectedBranch.id !== resolvedBranch.id) {
+                handleSelectBranch(resolvedBranch);
+                Alert.alert('Branch Updated', `Delivering from ${resolvedBranch.name} now!`);
+              }
+            }
+
+            setAddress(data.address);
+            setLatitude(data.latitude);
+            setLongitude(data.longitude);
+            setIsAddressModalOpen(false);
+          } catch (error) {
+            Alert.alert('Error', getErrorMessage(error, 'Could not verify delivery location.'));
+          }
         }}
       />
     </View>

@@ -37,6 +37,7 @@ const StoreContextProvider = ({ children }) => {
   const [username, setUsername] = useState('');
   const [customerInfo, setCustomerInfo] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
+  const [mapboxToken, setMapboxToken] = useState(null);
 
   // Load saved data and initial trade areas on startup
   useEffect(() => {
@@ -66,7 +67,8 @@ const StoreContextProvider = ({ children }) => {
           savedUsername,
           savedSubRegion,
           savedBranch,
-          savedLocationTimestamp
+          savedLocationTimestamp,
+          savedMapboxToken
         ] = await Promise.all([
           safeGetItem('cartItems'),
           safeGetItem('menuData'),
@@ -74,10 +76,12 @@ const StoreContextProvider = ({ children }) => {
           safeGetItem('username'),
           safeGetItem('selectedSubRegion'),
           safeGetItem('selectedBranch'),
-          safeGetItem('locationTimestamp')
+          safeGetItem('locationTimestamp'),
+          safeGetItem('mapboxToken')
         ]);
 
         if (cachedCart) setCartItems(JSON.parse(cachedCart));
+        if (savedMapboxToken) setMapboxToken(savedMapboxToken);
         if (cachedMenuData) {
           const parsed = JSON.parse(cachedMenuData);
           setMenuData({
@@ -161,6 +165,10 @@ const StoreContextProvider = ({ children }) => {
             const tradeAreasData = await getTradeAreas(activeCompId);
             if (tradeAreasData && tradeAreasData.status) {
               setTradeAreas(tradeAreasData.trade_areas);
+              if (tradeAreasData.mapbox_access_token) {
+                setMapboxToken(tradeAreasData.mapbox_access_token);
+                await AsyncStorage.setItem('mapboxToken', tradeAreasData.mapbox_access_token);
+              }
             }
           } catch (e) {
             console.warn('Trade areas fetch failed, continuing without trade areas:', e.message);
@@ -545,6 +553,7 @@ const StoreContextProvider = ({ children }) => {
     logoutUser,
         updateOrderDetails,
         clearCustomerInfo,
+        mapboxToken,
       }}
     >
       {children}
