@@ -74,7 +74,7 @@ const DealItem = (props) => {
       {/* Right: Image + Add Button */}
       <View style={styles.imageSection}>
         <Image
-          source={image ? { uri: image } : require('../assets/dealsbanner.jpg.jpeg')}
+          source={image ? { uri: image } : require('../assets/dealsbanner.jpeg')}
           style={styles.dealImage}
           resizeMode="cover"
         />

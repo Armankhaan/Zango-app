@@ -114,8 +114,8 @@ const FoodDisplay = ({ category }) => {
           >
             <Text style={styles.sectionHeading}>{cat.name}</Text>
 
-            {(cat.id === 'deals-cat' || cat.name?.toLowerCase() === 'deals') ? (
-              <Image source={require('../assets/dealsbanner.jpg.jpeg')} style={styles.categoryImage} />
+            {(cat.id === 'deals-cat' || cat.name?.toLowerCase().includes('deal')) ? (
+              <Image source={require('../assets/dealsbanner.jpeg')} style={styles.categoryImage} />
             ) : cat.image ? (
               <Image source={{ uri: cat.image }} style={styles.categoryImage} />
             ) : null}
@@ -201,7 +201,7 @@ const getStyles = (theme) =>
     },
     categoryImage: {
       width: '100%',
-      height: 120,
+      height: 110,
       borderRadius: 12,
       marginBottom: 12,
       resizeMode: 'cover',
