@@ -72,8 +72,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerImage: {
-    height: 160,
-    resizeMode: 'cover',
+    aspectRatio: 2.5,
+    resizeMode: 'contain',
   },
   dots: {
     flexDirection: 'row',

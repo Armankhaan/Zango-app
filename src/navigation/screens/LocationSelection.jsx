@@ -281,16 +281,6 @@ export function LocationSelection() {
           </Animated.View>
         )}
 
-        {/* Branch Resolved Info */}
-        {((orderType === 'Delivery' && selectedBranch && selectedArea) || (orderType === 'Pick-Up' && pickedBranch)) && !loading && (
-          <View style={styles.branchCard}>
-            <CheckCircle size={20} color={theme.colors.success || '#4CAF50'} />
-            <View style={styles.branchInfo}>
-              <Text style={styles.branchLabel}>Nearest Branch</Text>
-              <Text style={styles.branchNameText}>{orderType === 'Delivery' ? selectedBranch.name : pickedBranch.name}</Text>
-            </View>
-          </View>
-        )}
       </ScrollView>
 
       {/* Confirm Button */}

@@ -1381,9 +1381,9 @@ export function DealOptions() {
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}>
         <View style={styles.headerPanel}>
           <Image
-            source={image ? { uri: image } : require('../../assets/dealsbanner.jpg.jpeg')}
+            source={image ? { uri: image } : require('../../assets/dealsbanner.jpeg')}
             style={styles.heroImage}
-            resizeMode="cover"
+            resizeMode="contain"
           />
           <View style={styles.infoBox}>
             <Text style={styles.title}>{name}</Text>
@@ -1863,7 +1863,8 @@ const getStyles = theme => StyleSheet.create({
   },
   heroImage: {
     width: '100%',
-    height: 180,
+    aspectRatio: 3.5,
+    resizeMode: 'contain',
   },
   infoBox: {
     padding: 20,
