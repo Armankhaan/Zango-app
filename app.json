@@ -1,23 +1,23 @@
 {
   "expo": {
-    "name": "kruncheese",
-    "slug": "kruncheese",
+    "name": "Krunceese",
+    "slug": "krunceese",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
-    "scheme": "kruncheese",
+    "scheme": "krunceese",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.satya164.reactnavigationtemplate"
+      "bundleIdentifier": "com.krc.krunceese"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.satya164.reactnavigationtemplate"
+      "package": "com.krc.krunceese"
     },
     "web": {
       "favicon": "./assets/favicon.png"
