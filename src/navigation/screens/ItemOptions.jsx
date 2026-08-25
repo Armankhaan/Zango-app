@@ -161,7 +161,8 @@ export function ItemOptions({ route }) {
     // Categorization
     const categoryName = (product.categoryName || product.category?.name || product.category_name || '').toLowerCase();
     const isPizza = categoryName.includes('pizza') || name.toLowerCase().includes('pizza');
-    const isBurger = categoryName.includes('burger');
+    const hasMealVariant = (variants || []).some(v => v.name?.toLowerCase().includes('meal'));
+    const isBurger = categoryName.includes('burger') || hasMealVariant;
 
     // Helper to determine if a nested topping heading is multi-select
     const isHeadingMultiSelect = (heading) => {

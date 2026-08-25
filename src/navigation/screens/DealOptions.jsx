@@ -591,23 +591,22 @@ export function DealOptions() {
       return selectedFirstHalfInSlot[sId] && selectedSecondHalfInSlot[sId] && sharedCrustNameInSlot[sId];
     }
 
-    // For regular products, verify that for every non-optional meal option group
-    // (belonging to 'make it a meal' variant group, e.g. Drinks, Fries)
-    // there is at least one selection made.
+    // For regular products, check "make it a meal" options (e.g. Drinks, Fries).
+    // Make it a meal options are NOT mandatory by default (0 selections = OK).
+    // BUT if any meal option is selected (e.g. a Drink or a Fry), BOTH must be selected!
     const toppingsOptions = getToppingsOption(prod);
     if (toppingsOptions && toppingsOptions.length > 0) {
-      const isMissingMealChoice = toppingsOptions.some(opt => {
-        const variantName = (opt.variantName || '').toLowerCase().trim();
-        const isMealOption = variantName === 'make it a meal';
-        if (isMealOption && opt.items && opt.items.length > 0) {
-          // Verify if any item from this group is selected in selectedToppings for this slot
-          const slotToppings = selectedToppings[sId] || {};
-          const hasSelection = opt.items.some(item => slotToppings[item.id] && slotToppings[item.id].quantity >= 1);
-          return !hasSelection;
+      const mealOptions = toppingsOptions.filter(opt => (opt.variantName || '').toLowerCase().trim() === 'make it a meal');
+      if (mealOptions.length > 0) {
+        const slotToppings = selectedToppings[sId] || {};
+        const selectedMealOptCount = mealOptions.filter(opt =>
+          opt.items && opt.items.some(item => slotToppings[item.id] && slotToppings[item.id].quantity >= 1)
+        ).length;
+
+        if (selectedMealOptCount > 0 && selectedMealOptCount < mealOptions.length) {
+          return false;
         }
-        return false;
-      });
-      if (isMissingMealChoice) return false;
+      }
     }
     
     return true;
@@ -1634,7 +1633,7 @@ export function DealOptions() {
                                                       if (isDefault) handleToppingQuantityChange(sId, topping, heading, -1);
                                                       else if (qty <= 1 && isMulti) handleToggleTopping(sId, topping, heading);
                                                       else if (qty <= 1 && !isMulti) {
-                                                          // radio button toggle logic if required, else keep selected
+                                                          handleToggleTopping(sId, topping, heading);
                                                       }
                                                       else handleToppingQuantityChange(sId, topping, heading, -1);
                                                   } else {
