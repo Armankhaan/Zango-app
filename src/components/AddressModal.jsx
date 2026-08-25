@@ -9,6 +9,7 @@ import {
   TextInput,
   Platform,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
@@ -29,6 +30,20 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
     }
   }, [visible, defaultAddress]);
 
+  const fetchAddressFromCoords = async (lat, lng) => {
+    if (!mapboxToken) return;
+    try {
+      const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxToken}`);
+      const json = await res.json();
+      if (json && json.features && json.features.length > 0) {
+        const placeName = json.features[0].place_name;
+        setAddressText(placeName);
+      }
+    } catch (e) {
+      console.warn('Reverse geocode error:', e);
+    }
+  };
+
   const handleUseCurrentLocation = async () => {
     setIsFetchingLocation(true);
     try {
@@ -41,6 +56,7 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
       const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       const { latitude, longitude } = location.coords;
       setCoordinates({ lat: latitude, lng: longitude });
+      fetchAddressFromCoords(latitude, longitude);
       
       // Tell webview to move map
       if (webviewRef.current) {
@@ -62,7 +78,9 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
     try {
       const data = JSON.parse(event.nativeEvent.data);
       if (data.type === 'MARKER_MOVED') {
-        setCoordinates({ lat: data.lat, lng: data.lng });
+        const { lat, lng } = data;
+        setCoordinates({ lat, lng });
+        fetchAddressFromCoords(lat, lng);
       }
     } catch (e) {
       console.warn('Error parsing webview message', e);
@@ -77,8 +95,8 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
       <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
       <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
       <style>
-        body { margin: 0; padding: 0; }
-        #map { width: 100vw; height: 100vh; }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
+        #map { width: 100%; height: 100%; position: absolute; top: 0; bottom: 0; left: 0; right: 0; }
       </style>
     </head>
     <body>
@@ -99,13 +117,21 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
             .addTo(map);
 
           function sendCoords(lat, lng) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'MARKER_MOVED', lat: lat, lng: lng }));
+            if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'MARKER_MOVED', lat: lat, lng: lng }));
+            }
           }
 
           marker.on('dragend', function() {
             var lngLat = marker.getLngLat();
             map.flyTo({ center: lngLat });
             sendCoords(lngLat.lat, lngLat.lng);
+          });
+
+          map.on('click', function(e) {
+            marker.setLngLat(e.lngLat);
+            map.flyTo({ center: e.lngLat });
+            sendCoords(e.lngLat.lat, e.lngLat.lng);
           });
 
           window.updateMapCenter = function(lat, lng) {
@@ -136,52 +162,54 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
             </TouchableOpacity>
           </View>
 
-          <View style={styles.inputSection}>
-            <Text style={[styles.label, { color: theme?.colors?.textSecondary || '#666' }]}>
-              Address (with post code if applicable)
-            </Text>
-            <TextInput
-              style={[styles.input, { borderColor, color: theme?.colors?.text || '#000' }]}
-              placeholder="Enter your complete street address"
-              placeholderTextColor="#999"
-              value={addressText}
-              onChangeText={setAddressText}
-            />
-
-            <Text style={[styles.label, { color: theme?.colors?.textSecondary || '#666', marginTop: 12 }]}>
-              Region
-            </Text>
-            <TextInput
-              style={[styles.input, { borderColor, backgroundColor: isLight ? '#F5F5F5' : '#2A2A2A', color: '#888' }]}
-              value={regionName || 'Region not selected'}
-              editable={false}
-            />
-            <Text style={styles.helpText}>To change your region, go back to Location Selection.</Text>
-          </View>
-
-          {mapboxToken ? (
-            <View style={styles.mapContainer}>
-              <WebView
-                ref={webviewRef}
-                source={{ html: mapHtml }}
-                style={{ flex: 1 }}
-                scrollEnabled={false}
-                javaScriptEnabled={true}
-                onMessage={handleWebViewMessage}
+          <ScrollView style={{ flexGrow: 0 }} showsVerticalScrollIndicator={false}>
+            <View style={styles.inputSection}>
+              <Text style={[styles.label, { color: theme?.colors?.textSecondary || '#666' }]}>
+                Address (with post code if applicable)
+              </Text>
+              <TextInput
+                style={[styles.input, { borderColor, color: theme?.colors?.text || '#000' }]}
+                placeholder="Enter your complete street address"
+                placeholderTextColor="#999"
+                value={addressText}
+                onChangeText={setAddressText}
               />
-              <TouchableOpacity 
-                style={styles.crosshairNativeBtn} 
-                onPress={handleUseCurrentLocation}
-                disabled={isFetchingLocation}
-              >
-                {isFetchingLocation ? (
-                  <ActivityIndicator size="small" color={ORANGE} />
-                ) : (
-                  <Text style={{ fontSize: 20 }}>📍</Text>
-                )}
-              </TouchableOpacity>
+
+              <Text style={[styles.label, { color: theme?.colors?.textSecondary || '#666', marginTop: 12 }]}>
+                Region
+              </Text>
+              <TextInput
+                style={[styles.input, { borderColor, backgroundColor: isLight ? '#F5F5F5' : '#2A2A2A', color: '#888' }]}
+                value={regionName || 'Region not selected'}
+                editable={false}
+              />
+              <Text style={styles.helpText}>To change your region, go back to Location Selection.</Text>
             </View>
-          ) : null}
+
+            {mapboxToken ? (
+              <View style={styles.mapContainer}>
+                <WebView
+                  ref={webviewRef}
+                  source={{ html: mapHtml }}
+                  style={{ flex: 1 }}
+                  scrollEnabled={false}
+                  javaScriptEnabled={true}
+                  onMessage={handleWebViewMessage}
+                />
+                <TouchableOpacity 
+                  style={styles.crosshairNativeBtn} 
+                  onPress={handleUseCurrentLocation}
+                  disabled={isFetchingLocation}
+                >
+                  {isFetchingLocation ? (
+                    <ActivityIndicator size="small" color={ORANGE} />
+                  ) : (
+                    <Text style={{ fontSize: 20 }}>📍</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ) : null}
+          </ScrollView>
 
           <TouchableOpacity
             style={[styles.saveBtn, { backgroundColor: ORANGE }]}
@@ -210,13 +238,13 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
-    maxHeight: height * 0.85,
+    maxHeight: height * 0.9,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   title: {
     fontSize: 20,
@@ -236,7 +264,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   inputSection: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   label: {
     fontSize: 12,
@@ -255,18 +283,18 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   mapContainer: {
-    flex: 1,
+    height: 260,
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1.5,
     borderColor: '#E0E0E0',
-    marginBottom: 20,
+    marginBottom: 16,
     position: 'relative',
   },
   crosshairNativeBtn: {
     position: 'absolute',
-    bottom: 16,
-    right: 16,
+    bottom: 14,
+    right: 14,
     backgroundColor: '#fff',
     width: 44,
     height: 44,
@@ -283,6 +311,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 16,
     alignItems: 'center',
+    marginTop: 8,
     marginBottom: Platform.OS === 'ios' ? 20 : 0,
   },
   saveBtnText: {
