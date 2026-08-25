@@ -17,11 +17,13 @@ import {
 import { StoreContext } from '../../context/StoreContext';
 import { ThemeContext } from '../../context/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import Config from '../../constants/Config';
 import { X, ArrowLeft } from 'lucide-react-native';
 
 export const Login = () => {
+  const insets = useSafeAreaInsets();
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -98,7 +100,7 @@ export const Login = () => {
         <View style={styles.wrapper}>
           <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
 
-          <View style={styles.sheetContainer}>
+          <View style={[styles.sheetContainer, { paddingBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 48 : 32) + 16 }]}>
             <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
               <X size={20} color="#666" />
             </TouchableOpacity>
