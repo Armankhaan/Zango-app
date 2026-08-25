@@ -9,6 +9,7 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { StoreContext } from '../../context/StoreContext';
@@ -19,6 +20,7 @@ import { User, Phone, Mail, MapPin, CreditCard } from 'lucide-react-native';
 import AddressModal from '../../components/AddressModal';
 
 export function Checkout() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { cartItems, orderDetails, clearCart, selectedBranch, customerInfo, handleSelectBranch } = useContext(StoreContext);
   const { theme } = useContext(ThemeContext);
@@ -312,7 +314,7 @@ export function Checkout() {
       </ScrollView>
 
       {/* Place Order Bar */}
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 40 : 20) + 10 }]}>
         <TouchableOpacity
           style={[styles.placeOrderBtn, loading && { opacity: 0.7 }]}
           onPress={handlePlaceOrder}
@@ -373,7 +375,7 @@ const getStyles = (theme) => StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    paddingBottom: 120,
+    paddingBottom: 220,
   },
   sectionHeader: {
     flexDirection: 'row',

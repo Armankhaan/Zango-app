@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StoreContext } from '../../context/StoreContext';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { ThemeContext } from '../../context/ThemeContext';
@@ -171,6 +172,7 @@ const RenderDetails = ({ details }) => {
 };
 
 export function Cart() {
+  const insets = useSafeAreaInsets();
   const { theme } = useContext(ThemeContext);
   const styles = getStyles(theme);
   const {
@@ -423,7 +425,7 @@ export function Cart() {
       </ScrollView>
 
       {/* Bottom Action Bar */}
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 44 : 16) + 12 }]}>
         <View style={styles.totalRow}>
           <Text style={styles.bottomTotal}>Total</Text>
           <Text style={styles.bottomTotalAmount}>Rs. {total.toFixed(0)}</Text>
@@ -475,7 +477,7 @@ const getStyles = theme => {
     },
     // Scroll
     scrollView: { flex: 1 },
-    scrollContent: { paddingHorizontal: 20, paddingBottom: 200 },
+    scrollContent: { paddingHorizontal: 20, paddingBottom: 260 },
     itemsHeader: {
       fontSize: 18,
       fontWeight: '700',

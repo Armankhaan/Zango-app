@@ -9,7 +9,9 @@ import {
   useWindowDimensions,
   ActivityIndicator,
   Image,
+  Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StoreContext } from '../context/StoreContext';
 import { useNavigation } from '@react-navigation/native';
 import FoodItem from './FoodItem';
@@ -18,6 +20,7 @@ import { ThemeContext } from '../context/ThemeContext';
 import { ShoppingCart } from 'lucide-react-native';
 
 const FoodDisplay = ({ category }) => {
+  const insets = useSafeAreaInsets();
   const { cartItems = {}, menuData = {}, loading, addToCart } = useContext(StoreContext);
   const { categories: rawCategories = [], deals = [], branch } = menuData;
   const categories = deals.length > 0
@@ -104,7 +107,7 @@ const FoodDisplay = ({ category }) => {
       <ScrollView
         ref={scrollViewRef}
         style={styles.mainContent}
-        contentContainerStyle={{ paddingBottom: itemCount > 0 ? 100 : 40 }}
+        contentContainerStyle={{ paddingBottom: itemCount > 0 ? 140 : 40 }}
       >
         {categories.map(cat => (
           <View
@@ -135,7 +138,7 @@ const FoodDisplay = ({ category }) => {
       {/* Cart Footer */}
       {itemCount > 0 && (
         <TouchableOpacity
-          style={styles.cartBar}
+          style={[styles.cartBar, { bottom: Math.max(insets.bottom, Platform.OS === 'android' ? 36 : 16) }]}
           onPress={() => navigation.navigate('Cart')}
           activeOpacity={0.9}
         >

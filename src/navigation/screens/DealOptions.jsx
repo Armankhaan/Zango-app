@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StoreContext } from '../../context/StoreContext';
@@ -1831,7 +1832,7 @@ export function DealOptions() {
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 40 : 20) + 10 }]}>
         <TouchableOpacity
           style={[styles.confirmBtn, !isAllSlotsFilled && styles.confirmBtnDisabled]}
           onPress={handleAddToCart}

@@ -17,9 +17,11 @@ import { apiClient } from '../../services/APIservice';
 import { StoreContext } from '../../context/StoreContext';
 import { ThemeContext } from '../../context/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapPin, ChevronDown, CheckCircle } from 'lucide-react-native';
 
 export function LocationSelection() {
+  const insets = useSafeAreaInsets();
   const { theme } = useContext(ThemeContext);
   const { tradeAreas, handleSelectSubRegion, handleSelectBranch, loading, selectedBranch, updateOrderDetails, mapboxToken } = useContext(StoreContext);
   const navigation = useNavigation();
@@ -286,7 +288,7 @@ export function LocationSelection() {
       </ScrollView>
 
       {/* Confirm Button */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 40 : 20) + 10 }]}>
         <TouchableOpacity
           style={[
             styles.confirmBtn,

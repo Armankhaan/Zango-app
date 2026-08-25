@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StoreContext } from '../../context/StoreContext';
@@ -1947,7 +1947,7 @@ export function ItemOptions({ route }) {
                 })}
             </ScrollView>
 
-            <View style={[styles.footer, { backgroundColor: theme.colors.card, paddingBottom: Math.max(insets.bottom, 24) }]}>
+            <View style={[styles.footer, { backgroundColor: theme.colors.card, paddingBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 40 : 24) + 10 }]}>
                 <TouchableOpacity
                     style={[styles.confirmBtn, isProductIncomplete() && styles.confirmBtnIncomplete]}
                     onPress={handleAddToCart}
