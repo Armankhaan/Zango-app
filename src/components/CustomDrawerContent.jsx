@@ -70,7 +70,7 @@ export function CustomDrawerContent({ navigation, ...props }) {
       >
         {customerInfo ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#c00000', justifyContent: 'center', alignItems: 'center' }}>
+            <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#FF6600', justifyContent: 'center', alignItems: 'center' }}>
               <Text style={{ color: 'white', fontSize: 24, fontWeight: '900' }}>
                 {(customerInfo.name || customerInfo.username || 'G').substring(0, 1).toUpperCase()}
               </Text>
@@ -159,7 +159,7 @@ export function CustomDrawerContent({ navigation, ...props }) {
           <Switch
             value={offerNotifications}
             onValueChange={setOfferNotifications}
-            trackColor={{ true: '#C40C0C', false: '#E0E0E0' }}
+            trackColor={{ true: '#FF6600', false: '#E0E0E0' }}
             thumbColor="#FFFFFF"
           />
         </View>

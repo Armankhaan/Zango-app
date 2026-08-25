@@ -54,7 +54,7 @@ const getStyles = theme => StyleSheet.create({
   title: { fontSize: 24, fontWeight: 'bold', color: theme.colors.text, marginBottom: 20 },
   text: { fontSize: 16, color: theme.colors.textSecondary || '#666', marginBottom: 30, lineHeight: 22 },
   deleteBtn: {
-    backgroundColor: '#c00000',
+    backgroundColor: '#FF6600',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',

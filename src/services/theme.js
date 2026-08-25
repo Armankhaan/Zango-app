@@ -4,9 +4,9 @@ import { Platform } from 'react-native';
 export const LightTheme = {
   dark: false,
   colors: {
-    primary: '#D32F2F',        // Kruncheese Red
-    primaryDark: '#B71C1C',    // Deeper red for headers/gradients
-    primaryLight: '#FFCDD2',   // Light red tint
+    primary: '#FF6600',        // Zango Orange
+    primaryDark: '#E65100',    // Deeper orange for headers/gradients
+    primaryLight: '#FFE0B2',   // Light orange tint
     background: '#FFFFFF',     // Pure White
     surface: '#F8F8F8',        // Very light gray for sections
     card: '#FFFFFF',           // White cards
@@ -15,11 +15,11 @@ export const LightTheme = {
     textMuted: '#999999',      // Muted text
     border: '#EEEEEE',        // Light border
     borderMedium: '#E0E0E0',  // Medium border
-    notification: '#D32F2F',
+    notification: '#FF6600',
     secondary: '#FFB800',      // Amber/Gold
     muted: '#6B7280',
     success: '#4CAF50',        // Green
-    error: '#F44336',          // Error red
+    error: '#FF3D00',          // Error orange
     white: '#FFFFFF',
     overlay: 'rgba(0,0,0,0.5)',
   },
@@ -71,9 +71,9 @@ export const LightTheme = {
 export const DarkTheme = {
   dark: true,
   colors: {
-    primary: '#EF5350',        // Lighter red for dark mode
-    primaryDark: '#D32F2F',
-    primaryLight: '#4A1A1A',
+    primary: '#FF7A29',        // Lighter orange for dark mode
+    primaryDark: '#E65100',
+    primaryLight: '#4A2510',
     background: '#121212',
     surface: '#1E1E1E',
     card: '#1E1E1E',
@@ -82,11 +82,11 @@ export const DarkTheme = {
     textMuted: '#757575',
     border: '#2C2C2C',
     borderMedium: '#3A3A3A',
-    notification: '#EF5350',
+    notification: '#FF7A29',
     secondary: '#FFB800',
     muted: '#94A3B8',
     success: '#66BB6A',
-    error: '#EF5350',
+    error: '#d36212ff',
     white: '#FFFFFF',
     overlay: 'rgba(0,0,0,0.7)',
   },

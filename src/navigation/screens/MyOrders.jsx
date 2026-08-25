@@ -35,7 +35,7 @@ export function MyOrders() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>My Orders</Text>
-      {loading ? <ActivityIndicator size="large" color="#C40C0C" /> : (
+      {loading ? <ActivityIndicator size="large" color="#FF6600" /> : (
         <FlatList
           data={orders}
           keyExtractor={item => item.id?.toString() || Math.random().toString()}
@@ -43,7 +43,7 @@ export function MyOrders() {
             <TouchableOpacity style={styles.card} activeOpacity={0.8}>
               <View style={styles.cardHeader}>
                 <View style={styles.orderNoWrap}>
-                  <Package color="#C40C0C" size={20} />
+                  <Package color="#FF6600" size={20} />
                   <Text style={styles.orderNo}>#{item.order_number}</Text>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}>
@@ -77,5 +77,5 @@ const getStyles = theme => StyleSheet.create({
   statusText: { fontSize: 12, fontWeight: 'bold', textTransform: 'capitalize' },
   cardBody: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#f0f0f0', paddingTop: 12 },
   date: { fontSize: 14, color: '#666' },
-  price: { fontSize: 16, fontWeight: '900', color: '#C40C0C' }
+  price: { fontSize: 16, fontWeight: '900', color: '#FF6600' }
 });

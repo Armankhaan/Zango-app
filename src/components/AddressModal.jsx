@@ -94,7 +94,7 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
             zoom: 15
           });
 
-          var marker = new mapboxgl.Marker({ draggable: true, color: '#D32F2F' })
+          var marker = new mapboxgl.Marker({ draggable: true, color: '#FF6600' })
             .setLngLat([${coordinates.lng}, ${coordinates.lat}])
             .addTo(map);
 
@@ -122,7 +122,7 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
   const isLight = !theme?.dark;
   const cardBg = isLight ? '#FFFFFF' : '#1E1E1E';
   const borderColor = isLight ? '#E0E0E0' : '#333333';
-  const RED = '#D32F2F';
+  const ORANGE = '#FF6600';
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true}>
@@ -159,30 +159,32 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
             <Text style={styles.helpText}>To change your region, go back to Location Selection.</Text>
           </View>
 
-          <View style={styles.mapContainer}>
-            <WebView
-              ref={webviewRef}
-              source={{ html: mapHtml }}
-              style={{ flex: 1 }}
-              scrollEnabled={false}
-              javaScriptEnabled={true}
-              onMessage={handleWebViewMessage}
-            />
-            <TouchableOpacity 
-              style={styles.crosshairNativeBtn} 
-              onPress={handleUseCurrentLocation}
-              disabled={isFetchingLocation}
-            >
-              {isFetchingLocation ? (
-                <ActivityIndicator size="small" color={RED} />
-              ) : (
-                <Text style={{ fontSize: 20 }}>📍</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+          {mapboxToken ? (
+            <View style={styles.mapContainer}>
+              <WebView
+                ref={webviewRef}
+                source={{ html: mapHtml }}
+                style={{ flex: 1 }}
+                scrollEnabled={false}
+                javaScriptEnabled={true}
+                onMessage={handleWebViewMessage}
+              />
+              <TouchableOpacity 
+                style={styles.crosshairNativeBtn} 
+                onPress={handleUseCurrentLocation}
+                disabled={isFetchingLocation}
+              >
+                {isFetchingLocation ? (
+                  <ActivityIndicator size="small" color={ORANGE} />
+                ) : (
+                  <Text style={{ fontSize: 20 }}>📍</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          ) : null}
 
           <TouchableOpacity
-            style={[styles.saveBtn, { backgroundColor: RED }]}
+            style={[styles.saveBtn, { backgroundColor: ORANGE }]}
             onPress={() => onSave({
               address: addressText,
               latitude: coordinates.lat,
@@ -208,7 +210,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
-    height: height * 0.85,
+    maxHeight: height * 0.85,
   },
   header: {
     flexDirection: 'row',

@@ -110,7 +110,7 @@ export const Login = () => {
             )}
 
             <View style={styles.logoSection}>
-              <Image source={require('../../assets/Kruncheese.png')} style={styles.logo} resizeMode="contain" />
+              <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
               <Text style={styles.tagline}>Your way Everyday!</Text>
             </View>
 
@@ -207,7 +207,7 @@ export const Login = () => {
 export default Login;
 
 const styles = StyleSheet.create({
-  overlayContainer: { flex: 1, backgroundColor: 'rgba(100, 0, 15, 0.75)' },
+  overlayContainer: { flex: 1, backgroundColor: 'rgba(230, 81, 0, 0.85)' },
   wrapper: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { flex: 1 },
   sheetContainer: {
@@ -219,10 +219,9 @@ const styles = StyleSheet.create({
   backBtn: { position: 'absolute', top: 16, left: 16, zIndex: 10, padding: 6 },
   logoSection: { alignItems: 'center', marginBottom: 20, marginTop: 10 },
   logo: {
-    width: Math.min(Dimensions.get('window').width * 0.55, 220),
-    maxWidth: '80%',
-    aspectRatio: 4,
-    height: undefined,
+    width: Math.min(Dimensions.get('window').width * 0.7, 260),
+    height: 80,
+    resizeMode: 'contain',
   },
   tagline: { color: '#333333', fontSize: 13, fontWeight: '500', fontStyle: 'italic', marginTop: 2 },
   formSection: { width: '100%' },
@@ -231,7 +230,7 @@ const styles = StyleSheet.create({
   inputFieldBox: { borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8, marginBottom: 12 },
   inputLabel: { fontSize: 11, color: '#444444', fontWeight: '700', marginBottom: 2 },
   input: { fontSize: 15, color: '#000000', paddingVertical: 2, height: 36 },
-  loginBtn: { height: 52, backgroundColor: '#C40C0C', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
+  loginBtn: { height: 52, backgroundColor: '#FF6600', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
   btnDisabled: { opacity: 0.7 },
   loginBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '700' },
 });

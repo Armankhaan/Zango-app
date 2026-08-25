@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   navBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#D32F2F',
+    backgroundColor: '#FF6600',
     paddingTop: Platform.OS === 'ios' ? 50 : 36,
     paddingBottom: 14,
     paddingHorizontal: 16,

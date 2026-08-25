@@ -14,7 +14,7 @@ import { ThemeContext } from '../../context/ThemeContext';
 import Config from '../../constants/Config';
 import getErrorMessage from '../../utils/errorHelper';
 
-const RED = '#D32F2F';
+const ORANGE = '#FF6600';
 
 const PlaceOrderScreen = () => {
   const navigation = useNavigation();
@@ -236,8 +236,8 @@ const getStyles = theme => {
       gap: 6,
     },
     methodTileSelected: {
-      borderColor: RED,
-      backgroundColor: RED + '08',
+      borderColor: ORANGE,
+      backgroundColor: ORANGE + '08',
     },
     methodIcon: {
       fontSize: 24,
@@ -248,7 +248,7 @@ const getStyles = theme => {
       color: secondaryText,
     },
     methodTextSelected: {
-      color: RED,
+      color: ORANGE,
     },
     summaryRow: {
       flexDirection: 'row',
@@ -278,10 +278,10 @@ const getStyles = theme => {
     totalValue: {
       fontSize: 20,
       fontWeight: '800',
-      color: RED,
+      color: ORANGE,
     },
     placeOrderBtn: {
-      backgroundColor: RED,
+      backgroundColor: ORANGE,
       borderRadius: 14,
       padding: 18,
       alignItems: 'center',

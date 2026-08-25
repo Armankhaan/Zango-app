@@ -28,7 +28,7 @@ export default function App() {
         {/* paint only the top notch/status-bar area */}
         <SafeAreaView
           edges={['top']}
-          style={{ backgroundColor: '#D32F2F' }}
+          style={{ backgroundColor: '#FF6600' }}
         />
 
         {/* White status bar icons for red header */}

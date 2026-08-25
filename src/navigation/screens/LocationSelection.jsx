@@ -21,7 +21,7 @@ import { MapPin, ChevronDown, CheckCircle } from 'lucide-react-native';
 
 export function LocationSelection() {
   const { theme } = useContext(ThemeContext);
-  const { tradeAreas, handleSelectSubRegion, handleSelectBranch, loading, selectedBranch, updateOrderDetails } = useContext(StoreContext);
+  const { tradeAreas, handleSelectSubRegion, handleSelectBranch, loading, selectedBranch, updateOrderDetails, mapboxToken } = useContext(StoreContext);
   const navigation = useNavigation();
 
   const [orderType, setOrderType] = useState(null);
@@ -125,7 +125,7 @@ export function LocationSelection() {
         {/* Logo Section */}
         <View style={styles.logoSection}>
           <Image
-            source={require('../../assets/Kruncheese.png')}
+            source={require('../../assets/logo.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -133,7 +133,7 @@ export function LocationSelection() {
 
         {/* Bottom Card */}
         <View style={styles.welcomeCard}>
-          <Text style={styles.welcomeTitle}>Welcome to Kruncheese 👋</Text>
+          <Text style={styles.welcomeTitle}>Welcome to Zango 👋</Text>
           <Text style={styles.welcomeSubtitle}>Please select your order type to continue</Text>
 
           <TouchableOpacity
@@ -208,17 +208,19 @@ export function LocationSelection() {
         <Text style={styles.title}>Please select your location</Text>
         <Text style={styles.subtitle}>Choose your city and area to find the nearest branch</Text>
 
-        <TouchableOpacity 
-          style={styles.currentLocationBtn}
-          onPress={handleUseCurrentLocation}
-          disabled={isFetchingLocation}
-        >
-          {isFetchingLocation ? (
-             <ActivityIndicator size="small" color={theme.colors.primary} />
-          ) : (
-            <Text style={styles.currentLocationBtnText}>Use Current Location</Text>
-          )}
-        </TouchableOpacity>
+        {mapboxToken ? (
+          <TouchableOpacity 
+            style={styles.currentLocationBtn}
+            onPress={handleUseCurrentLocation}
+            disabled={isFetchingLocation}
+          >
+            {isFetchingLocation ? (
+               <ActivityIndicator size="small" color={theme.colors.primary} />
+            ) : (
+              <Text style={styles.currentLocationBtnText}>Use Current Location</Text>
+            )}
+          </TouchableOpacity>
+        ) : null}
 
         {/* City / Region Picker */}
         <View style={styles.pickerSection}>
@@ -326,10 +328,9 @@ const getStyles = (theme) => StyleSheet.create({
     paddingHorizontal: 20,
   },
   logo: {
-    width: Math.min(Dimensions.get('window').width * 0.65, 280),
-    maxWidth: '85%',
-    aspectRatio: 4,
-    height: undefined,
+    width: Math.min(Dimensions.get('window').width * 0.75, 280),
+    height: 90,
+    resizeMode: 'contain',
   },
   welcomeCard: {
     flex: 0.5,

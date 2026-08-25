@@ -333,32 +333,29 @@ export function Checkout() {
         theme={theme}
         onSave={async (data) => {
           try {
-            // Verify with backend that this location is within our delivery radius
-            const resp = await axios.post(`${Config.BASE_URL}/trade-areas/resolve-by-location`, {
-              latitude: data.latitude,
-              longitude: data.longitude
-            });
-            
-            if (!resp.data.status) {
-              Alert.alert('Error', 'This location is not serviceable.');
-              return;
-            }
-
-            // Automatically update the active branch if the location is closer to another branch
-            if (resp.data.data && resp.data.data.branch) {
-              const resolvedBranch = resp.data.data.branch;
-              if (!selectedBranch || selectedBranch.id !== resolvedBranch.id) {
-                handleSelectBranch(resolvedBranch);
-                Alert.alert('Branch Updated', `Delivering from ${resolvedBranch.name} now!`);
+            if (data.latitude && data.longitude) {
+              const resp = await axios.post(`${Config.BASE_URL}/trade-areas/resolve-by-location`, {
+                latitude: data.latitude,
+                longitude: data.longitude
+              });
+              
+              if (resp.data && resp.data.status && resp.data.data && resp.data.data.branch) {
+                const resolvedBranch = resp.data.data.branch;
+                if (!selectedBranch || selectedBranch.id !== resolvedBranch.id) {
+                  handleSelectBranch(resolvedBranch);
+                  Alert.alert('Branch Updated', `Delivering from ${resolvedBranch.name} now!`);
+                }
               }
             }
 
             setAddress(data.address);
-            setLatitude(data.latitude);
-            setLongitude(data.longitude);
+            if (data.latitude) setLatitude(data.latitude);
+            if (data.longitude) setLongitude(data.longitude);
             setIsAddressModalOpen(false);
           } catch (error) {
-            Alert.alert('Error', getErrorMessage(error, 'Could not verify delivery location.'));
+            // Even if location verification is skipped/fails, accept manual address entry
+            setAddress(data.address);
+            setIsAddressModalOpen(false);
           }
         }}
       />

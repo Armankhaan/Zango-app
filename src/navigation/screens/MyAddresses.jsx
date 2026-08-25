@@ -60,14 +60,14 @@ export function MyAddresses() {
         <TouchableOpacity style={styles.btn} onPress={handleAdd}><Text style={styles.btnText}>Add</Text></TouchableOpacity>
       </View>
 
-      {loading ? <ActivityIndicator size="large" color="#C40C0C" /> : (
+      {loading ? <ActivityIndicator size="large" color="#FF6600" /> : (
         <FlatList
           data={addresses}
           keyExtractor={item => item.id.toString()}
           renderItem={({item}) => (
             <View style={styles.card}>
               <View style={{flex: 1}}><Text style={styles.addressText}>{item.address}</Text></View>
-              <TouchableOpacity onPress={() => handleDelete(item.id)}><Trash2 color="#C40C0C" size={20} /></TouchableOpacity>
+              <TouchableOpacity onPress={() => handleDelete(item.id)}><Trash2 color="#FF6600" size={20} /></TouchableOpacity>
             </View>
           )}
           ListEmptyComponent={<Text style={styles.text}>No addresses found.</Text>}
@@ -84,7 +84,7 @@ const getStyles = theme => StyleSheet.create({
   text: { fontSize: 16, color: '#666' },
   addBox: { flexDirection: 'row', marginBottom: 20 },
   input: { flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 12, height: 45, backgroundColor: '#fff', color: '#000' },
-  btn: { backgroundColor: '#C40C0C', justifyContent: 'center', paddingHorizontal: 20, borderRadius: 8, marginLeft: 10 },
+  btn: { backgroundColor: '#FF6600', justifyContent: 'center', paddingHorizontal: 20, borderRadius: 8, marginLeft: 10 },
   btnText: { color: '#fff', fontWeight: 'bold' },
   card: { flexDirection: 'row', backgroundColor: '#fff', padding: 15, borderRadius: 8, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2, alignItems: 'center' },
   addressText: { color: '#000', fontSize: 15 }

@@ -37,8 +37,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "fc90f8d7-dda2-42d6-ba9c-517d9742ef52"
+        "projectId": "84246e5b-0716-4f82-965e-b203f88ac2a6"
       }
-    }
+    },
+    "owner": "armankhan030"
   }
 }

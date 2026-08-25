@@ -1,10 +1,10 @@
 // src/constants/Config.js
 
 /**
- * Global Configuration for Kruncheese App
+ * Global Configuration for Zango App
  */
 export const Config = {
-  // Company ID for Kruncheese
+  // Company ID for Zango
   COMPANY_ID: 2,
 
   BASE_URL: 'https://api.pjcrescent.com/api/public',

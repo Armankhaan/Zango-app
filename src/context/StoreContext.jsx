@@ -119,7 +119,7 @@ const StoreContextProvider = ({ children }) => {
           }
         }
 
-        if (!activeBranch) {
+        if (!activeBranch && savedMapboxToken) {
           try {
             const { status } = await Location.requestForegroundPermissionsAsync();
             if (status === 'granted') {
