@@ -19,6 +19,13 @@ const { width, height } = Dimensions.get('window');
 
 const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionName = '', theme }) => {
   const { mapboxToken } = useContext(StoreContext);
+  const hasValidMapKey = !!(
+    mapboxToken &&
+    typeof mapboxToken === 'string' &&
+    mapboxToken.trim().length > 0 &&
+    mapboxToken.trim() !== 'null' &&
+    mapboxToken.trim() !== 'undefined'
+  );
   const [addressText, setAddressText] = useState(defaultAddress);
   const [coordinates, setCoordinates] = useState({ lat: 31.5204, lng: 74.3587 });
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
@@ -186,7 +193,7 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
               <Text style={styles.helpText}>To change your region, go back to Location Selection.</Text>
             </View>
 
-            {mapboxToken ? (
+            {hasValidMapKey ? (
               <View style={styles.mapContainer}>
                 <WebView
                   ref={webviewRef}

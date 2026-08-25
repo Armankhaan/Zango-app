@@ -24,6 +24,13 @@ export function LocationSelection() {
   const insets = useSafeAreaInsets();
   const { theme } = useContext(ThemeContext);
   const { tradeAreas, handleSelectSubRegion, handleSelectBranch, loading, selectedBranch, updateOrderDetails, mapboxToken } = useContext(StoreContext);
+  const hasValidMapKey = !!(
+    mapboxToken &&
+    typeof mapboxToken === 'string' &&
+    mapboxToken.trim().length > 0 &&
+    mapboxToken.trim() !== 'null' &&
+    mapboxToken.trim() !== 'undefined'
+  );
   const navigation = useNavigation();
 
   const [orderType, setOrderType] = useState(null);
@@ -210,7 +217,7 @@ export function LocationSelection() {
         <Text style={styles.title}>Please select your location</Text>
         <Text style={styles.subtitle}>Choose your city and area to find the nearest branch</Text>
 
-        {mapboxToken ? (
+        {hasValidMapKey ? (
           <TouchableOpacity 
             style={styles.currentLocationBtn}
             onPress={handleUseCurrentLocation}

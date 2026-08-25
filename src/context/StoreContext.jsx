@@ -81,7 +81,12 @@ const StoreContextProvider = ({ children }) => {
         ]);
 
         if (cachedCart) setCartItems(JSON.parse(cachedCart));
-        if (savedMapboxToken) setMapboxToken(savedMapboxToken);
+        if (savedMapboxToken && savedMapboxToken.trim() && savedMapboxToken !== 'null' && savedMapboxToken !== 'undefined') {
+          setMapboxToken(savedMapboxToken.trim());
+        } else {
+          setMapboxToken(null);
+          await AsyncStorage.removeItem('mapboxToken');
+        }
         if (cachedMenuData) {
           const parsed = JSON.parse(cachedMenuData);
           setMenuData({
@@ -165,9 +170,13 @@ const StoreContextProvider = ({ children }) => {
             const tradeAreasData = await getTradeAreas(activeCompId);
             if (tradeAreasData && tradeAreasData.status) {
               setTradeAreas(tradeAreasData.trade_areas);
-              if (tradeAreasData.mapbox_access_token) {
-                setMapboxToken(tradeAreasData.mapbox_access_token);
-                await AsyncStorage.setItem('mapboxToken', tradeAreasData.mapbox_access_token);
+              const token = (tradeAreasData.mapbox_access_token || '').trim();
+              if (token && token !== 'null' && token !== 'undefined') {
+                setMapboxToken(token);
+                await AsyncStorage.setItem('mapboxToken', token);
+              } else {
+                setMapboxToken(null);
+                await AsyncStorage.removeItem('mapboxToken');
               }
             }
           } catch (e) {
