@@ -9,37 +9,45 @@ import StoreContextProvider from './context/StoreContext'
 import { ThemeProvider } from './context/ThemeContext'
 
 import { Navigation } from './navigation'
-import { Asset } from 'expo-asset'
 import * as SplashScreen from 'expo-splash-screen'
-import { Assets as NavAssets } from '@react-navigation/elements'
 
-// Preload nav assets and keep splash screen visible until navigation is ready
-Asset.loadAsync([...NavAssets])
-SplashScreen.preventAutoHideAsync()
+// Safely instruct splash screen to prevent auto-hiding on startup
+SplashScreen.preventAutoHideAsync().catch(() => {
+  /* ignore failure if splash screen can't be registered */
+})
 
 export default function App() {
   const scheme = useColorScheme()        // 'light' or 'dark'
   const isDark = scheme === 'dark'
 
+  const handleNavigationReady = async () => {
+    try {
+      await SplashScreen.hideAsync()
+    } catch (e) {
+      console.warn('Splash hide warning:', e)
+    }
+  }
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
-      <SafeAreaProvider>
-        {/* paint only the top notch/status-bar area */}
-        <SafeAreaView
-          edges={['top']}
-          style={{ backgroundColor: '#FF6600' }}
-        />
+        <SafeAreaProvider>
+          {/* paint only the top notch/status-bar area */}
+          <SafeAreaView
+            edges={['top']}
+            style={{ backgroundColor: '#FF6600' }}
+          />
 
-        {/* White status bar icons for red header */}
-        <ExpoStatusBar style="light" translucent />
+          {/* White status bar icons for orange header */}
+          <ExpoStatusBar style="light" translucent />
 
-        <StoreContextProvider>
-          <Navigation onReady={() => SplashScreen.hideAsync()} />
-        </StoreContextProvider>
-      </SafeAreaProvider>
+          <StoreContextProvider>
+            <Navigation onReady={handleNavigationReady} />
+          </StoreContextProvider>
+        </SafeAreaProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   )
 }
+
 
