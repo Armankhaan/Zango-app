@@ -101,7 +101,7 @@ const PlaceOrderScreen = () => {
         email: customerInfo?.email,
         employee_id: customerInfo?.employee_id,
         order_info: {
-          source: "krunceese",
+          source: "zango",
           cart: transformedCart,
           orderType: orderDetails?.orderType || "Dine In",
           table_id: orderDetails?.table_id || 3001,

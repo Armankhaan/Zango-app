@@ -24,10 +24,8 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="krunceeseapp"/>
-        <data android:scheme="exp+krunceeseapp"/>
-        <data android:scheme="kruncheese"/>
-        <data android:scheme="exp+kruncheese"/>
+        <data android:scheme="zango"/>
+        <data android:scheme="exp+zango"/>
       </intent-filter>
     </activity>
   </application>

@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>kruncheese</string>
+    <string>Zango</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -27,14 +27,14 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>krunceeseapp</string>
-          <string>com.satya164.reactnavigationtemplate</string>
+          <string>zango</string>
+          <string>com.zango.customer</string>
         </array>
       </dict>
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>exp+krunceeseapp</string>
+          <string>exp+zango</string>
         </array>
       </dict>
     </array>

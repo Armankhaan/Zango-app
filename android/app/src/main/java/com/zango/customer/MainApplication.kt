@@ -1,4 +1,4 @@
-package com.satya164.reactnavigationtemplate
+package com.zango.customer
 
 import android.app.Application
 import android.content.res.Configuration
