@@ -1984,8 +1984,9 @@ const getStyles = theme => StyleSheet.create({
     },
     heroImage: {
         width: '100%',
-        height: 250,
-        backgroundColor: '#f0f0f0',
+        height: 220,
+        backgroundColor: theme.colors.card,
+        resizeMode: 'contain',
     },
     infoBox: {
         padding: 24,

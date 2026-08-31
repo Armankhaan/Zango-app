@@ -13,11 +13,13 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StoreContext } from '../context/StoreContext';
 
 const { width, height } = Dimensions.get('window');
 
 const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionName = '', theme }) => {
+  const insets = useSafeAreaInsets();
   const { mapboxToken } = useContext(StoreContext);
   const hasValidMapKey = !!(
     mapboxToken &&
@@ -219,7 +221,7 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
           </ScrollView>
 
           <TouchableOpacity
-            style={[styles.saveBtn, { backgroundColor: ORANGE }]}
+            style={[styles.saveBtn, { backgroundColor: ORANGE, marginBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 24 : 16) }]}
             onPress={() => onSave({
               address: addressText,
               latitude: coordinates.lat,
