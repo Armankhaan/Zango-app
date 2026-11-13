@@ -4,22 +4,24 @@ import { Platform } from 'react-native';
 export const LightTheme = {
   dark: false,
   colors: {
-    primary: '#FF6600',        // Zango Orange
-    primaryDark: '#E65100',    // Deeper orange for headers/gradients
-    primaryLight: '#FFE0B2',   // Light orange tint
-    background: '#FFFFFF',     // Pure White
-    surface: '#F8F8F8',        // Very light gray for sections
+    primary: '#FF5C00',
+    onPrimary: '#181818',
+    ink: '#181818',        // Zango Orange
+    primaryDark: '#E05000',    // Deeper orange for headers/gradients
+    primaryLight: '#FFF0E6',   // Light orange tint
+    background: '#F6F5F2',     // Pure White
+    surface: '#F0EEEA',        // Very light gray for sections
     card: '#FFFFFF',           // White cards
-    text: '#1A1A1A',           // Near black
+    text: '#181818',           // Near black
     textSecondary: '#666666',  // Gray text
-    textMuted: '#999999',      // Muted text
-    border: '#EEEEEE',        // Light border
+    textMuted: '#77736D',      // Muted text
+    border: '#E7E5E1',        // Light border
     borderMedium: '#E0E0E0',  // Medium border
-    notification: '#FF6600',
-    secondary: '#FFB800',      // Amber/Gold
+    notification: '#FF5C00',
+    secondary: '#181818',      // Amber/Gold
     muted: '#6B7280',
     success: '#4CAF50',        // Green
-    error: '#FF3D00',          // Error orange
+    error: '#B42318',          // Error orange
     white: '#FFFFFF',
     overlay: 'rgba(0,0,0,0.5)',
   },
@@ -71,8 +73,10 @@ export const LightTheme = {
 export const DarkTheme = {
   dark: true,
   colors: {
-    primary: '#FF7A29',        // Lighter orange for dark mode
-    primaryDark: '#E65100',
+    primary: '#FF5C00',
+    onPrimary: '#181818',
+    ink: '#181818',        // Lighter orange for dark mode
+    primaryDark: '#E05000',
     primaryLight: '#4A2510',
     background: '#121212',
     surface: '#1E1E1E',
@@ -83,10 +87,10 @@ export const DarkTheme = {
     border: '#2C2C2C',
     borderMedium: '#3A3A3A',
     notification: '#FF7A29',
-    secondary: '#FFB800',
+    secondary: '#181818',
     muted: '#94A3B8',
     success: '#66BB6A',
-    error: '#d36212ff',
+    error: '#FF8A7A',
     white: '#FFFFFF',
     overlay: 'rgba(0,0,0,0.7)',
   },

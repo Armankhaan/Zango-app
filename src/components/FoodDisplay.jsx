@@ -1,3 +1,4 @@
+import DealCarousel from './DealCarousel';
 // src/components/FoodDisplay.jsx
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import {
@@ -21,7 +22,7 @@ import { ShoppingCart } from 'lucide-react-native';
 
 const FoodDisplay = ({ category }) => {
   const insets = useSafeAreaInsets();
-  const { cartItems = {}, menuData = {}, loading, addToCart } = useContext(StoreContext);
+  const { cartItems = {}, menuData = {}, loading, menuLoading, menuError, fetchMenu, selectedBranch, addToCart } = useContext(StoreContext);
   const { categories: rawCategories = [], deals = [], branch } = menuData;
   const categories = deals.length > 0
     ? [{ id: 'deals-cat', name: 'Deals', products: deals.map(d => ({ ...d, is_deal: true })) }, ...rawCategories]
@@ -58,7 +59,7 @@ const FoodDisplay = ({ category }) => {
     offsets.current[catName.toLowerCase()] = e.nativeEvent.layout.y;
   };
 
-  if (loading && categories.length === 0) {
+  if ((loading || menuLoading) && categories.length === 0) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -70,8 +71,10 @@ const FoodDisplay = ({ category }) => {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
         <Text style={{ fontSize: 16, color: theme.colors.textSecondary || theme.colors.text, textAlign: 'center' }}>
-          No menu available. Please select a valid location.
+          {menuError || 'The menu is on its way. Try refreshing or choose another store.'}
         </Text>
+        <TouchableOpacity style={{backgroundColor:theme.colors.primary,padding:14,borderRadius:10,marginTop:20}} onPress={()=>fetchMenu(selectedBranch?.id).catch(()=>{})}><Text style={{fontWeight:'700',color:'#181818'}}>Refresh menu</Text></TouchableOpacity>
+        <TouchableOpacity style={{padding:16}} onPress={()=>navigation.navigate('LocationSelection')}><Text style={{color:theme.colors.primaryDark,fontWeight:'700'}}>Change store</Text></TouchableOpacity>
       </View>
     );
   }
@@ -107,8 +110,9 @@ const FoodDisplay = ({ category }) => {
       <ScrollView
         ref={scrollViewRef}
         style={styles.mainContent}
-        contentContainerStyle={{ paddingBottom: itemCount > 0 ? 140 : 40 }}
+        contentContainerStyle={{ paddingBottom: itemCount > 0 ? 140 : 40, width:'100%', maxWidth:1000, alignSelf:'center' }}
       >
+        <View style={{padding:20}}><Text style={{fontSize:9,fontWeight:'800',letterSpacing:2,color:theme.colors.primaryDark,marginBottom:12}}>WELCOME TO ZANGO</Text><Text style={{fontSize:32,lineHeight:35,fontWeight:'900',letterSpacing:-1,color:theme.colors.text}}>FUEL YOUR DAY{"\n"}<Text style={{color:theme.colors.primaryDark}}>IN A ZANGO WAY</Text></Text><Text style={{fontSize:13,color:theme.colors.textSecondary,lineHeight:21,marginTop:14,marginBottom:24}}>Big on flavour. Made for your kind of hunger.</Text><DealCarousel key={selectedBranch?.id} deals={deals}/></View>
         {categories.map(cat => (
           <View
             key={cat.id}
@@ -117,17 +121,13 @@ const FoodDisplay = ({ category }) => {
           >
             <Text style={styles.sectionHeading}>{cat.name}</Text>
 
-            {(cat.id === 'deals-cat' || cat.name?.toLowerCase().includes('deal')) ? (
-              <Image source={require('../assets/dealsbanner.jpeg')} style={styles.categoryImage} />
-            ) : cat.image ? (
-              <Image source={{ uri: cat.image }} style={styles.categoryImage} />
-            ) : null}
+            {cat.image ? <Image source={{uri:cat.image}} style={styles.categoryImage}/> : null}
 
             {cat.products && cat.products.map(item => (
               <View key={item.id}>
                 {item.is_deal
-                  ? <DealItem {...item} onAddToCart={() => addToCart(item, true)} />
-                  : <FoodItem {...item} categoryName={cat.name} onAddToCart={() => addToCart(item, false)} />
+                  ? <DealItem {...item}  />
+                  : <FoodItem {...item} categoryName={cat.name}  />
                 }
               </View>
             ))}
@@ -174,7 +174,8 @@ const getStyles = (theme) =>
       paddingVertical: 8,
       paddingHorizontal: 18,
       borderRadius: 20,
-      backgroundColor: 'transparent',
+      backgroundColor: theme.colors.card,
+      borderWidth:1, borderColor:theme.colors.border,
     },
     categoryPillActive: {
       backgroundColor: theme.colors.primary,
@@ -185,7 +186,7 @@ const getStyles = (theme) =>
       color: theme.colors.textSecondary || theme.colors.text,
     },
     categoryPillTextActive: {
-      color: '#fff',
+      color: '#181818',
       fontWeight: '700',
     },
     mainContent: {

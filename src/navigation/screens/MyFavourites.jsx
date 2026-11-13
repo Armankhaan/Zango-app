@@ -25,7 +25,7 @@ export function MyFavourites() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>My Favourites</Text>
-      {loading ? <ActivityIndicator size="large" color="#FF6600" /> : (
+      {loading ? <ActivityIndicator size="large" color="#FF5C00" /> : (
         <FlatList
           data={favourites}
           keyExtractor={item => item.id.toString()}

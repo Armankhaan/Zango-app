@@ -75,7 +75,7 @@ export function RootStackNavigator() {
         options={{
           headerShown: true,
           title: 'Deal Options',
-          headerStyle: { backgroundColor: theme.colors.primary },
+          headerStyle: { backgroundColor: theme.colors.ink },
           headerTintColor: '#fff',
         }}
       />
@@ -86,7 +86,7 @@ export function RootStackNavigator() {
         options={{
           headerShown: true,
           title: 'Item Options',
-          headerStyle: { backgroundColor: theme.colors.primary },
+          headerStyle: { backgroundColor: theme.colors.ink },
           headerTintColor: '#fff',
         }}
       />
@@ -97,7 +97,7 @@ export function RootStackNavigator() {
         options={{
           headerShown: true,
           title: 'My Cart',
-          headerStyle: { backgroundColor: theme.colors.primary },
+          headerStyle: { backgroundColor: theme.colors.ink },
           headerTintColor: '#fff',
         }}
       />
@@ -108,7 +108,7 @@ export function RootStackNavigator() {
         options={{
           headerShown: true,
           title: 'Checkout',
-          headerStyle: { backgroundColor: theme.colors.primary },
+          headerStyle: { backgroundColor: theme.colors.ink },
           headerTintColor: '#fff',
         }}
       />
@@ -127,7 +127,7 @@ export function RootStackNavigator() {
         options={{
           headerShown: true,
           title: 'My Profile',
-          headerStyle: { backgroundColor: theme.colors.primary },
+          headerStyle: { backgroundColor: theme.colors.ink },
           headerTintColor: '#fff',
         }}
       />
@@ -137,7 +137,7 @@ export function RootStackNavigator() {
         options={{
           headerShown: true,
           title: 'My Addresses',
-          headerStyle: { backgroundColor: theme.colors.primary },
+          headerStyle: { backgroundColor: theme.colors.ink },
           headerTintColor: '#fff',
         }}
       />
@@ -147,7 +147,7 @@ export function RootStackNavigator() {
         options={{
           headerShown: true,
           title: 'My Orders',
-          headerStyle: { backgroundColor: theme.colors.primary },
+          headerStyle: { backgroundColor: theme.colors.ink },
           headerTintColor: '#fff',
         }}
       />
@@ -157,7 +157,7 @@ export function RootStackNavigator() {
         options={{
           headerShown: true,
           title: 'My Favourites',
-          headerStyle: { backgroundColor: theme.colors.primary },
+          headerStyle: { backgroundColor: theme.colors.ink },
           headerTintColor: '#fff',
         }}
       />
@@ -169,7 +169,7 @@ export function RootStackNavigator() {
         options={{
           headerShown: true,
           title: 'Account Deletion',
-          headerStyle: { backgroundColor: theme.colors.primary },
+          headerStyle: { backgroundColor: theme.colors.ink },
           headerTintColor: '#fff',
         }}
       />
@@ -179,7 +179,7 @@ export function RootStackNavigator() {
         component={NotFound}
         options={{
           title: '404',
-          headerStyle: { backgroundColor: theme.colors.primary },
+          headerStyle: { backgroundColor: theme.colors.ink },
           headerTintColor: '#fff',
         }}
       />
@@ -205,7 +205,7 @@ export function Navigation({ onReady }) {
       border: theme.colors.border,
       notification: theme.colors.notification,
     },
-    fonts: theme.fonts || {},
+    fonts: baseTheme.fonts,
   };
 
   return (

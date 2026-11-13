@@ -5,7 +5,7 @@
  */
 export const Config = {
   // Company ID for Zango
-  COMPANY_ID: 2,
+  COMPANY_ID: 10,
 
   BASE_URL: 'https://api.pjcrescent.com/api/public',
 };

@@ -1,3 +1,5 @@
+import { appOrderInfo } from '../../utils/orderPayload';
+import { apiClient } from '../../services/APIservice';
 import React, { useContext, useState, useEffect } from 'react';
 import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -209,92 +211,6 @@ export function Cart() {
     updateCartQuantity(key, newQuantity);
   };
 
-  const transformCartItems = (cart) => {
-    const transformed = {};
-    Object.keys(cart).forEach(key => {
-      const item = cart[key];
-      if (key.startsWith('deal-') || (item.details && item.details.slots)) {
-        transformed[key] = item;
-      } else if (item.details && (item.details.firstHalf || item.details.secondHalf)) {
-        const productIdStr = key.split('-')[0];
-        const productId = parseInt(productIdStr) || item.details?.id || 1;
-        transformed[key] = {
-          ...item,
-          details: {
-            id: productId,
-            name: item.name,
-            price: parseFloat(item.price || 0),
-            pos_code: item.pos_code || item.details?.pos_code || item.details?.size?.pos_code || null,
-            ref_code: item.ref_code || item.details?.ref_code || item.details?.size?.ref_code || '',
-            firstHalf: item.details.firstHalf,
-            secondHalf: item.details.secondHalf
-          }
-        };
-      } else {
-        const productIdStr = key.split('-')[0];
-        const productId = parseInt(productIdStr) || item.details?.size?.item_id || 1;
-        transformed[key] = {
-          ...item,
-          details: {
-            id: productId,
-            name: item.name,
-            price: parseFloat(item.details?.size?.price || 0),
-            pos_code: item.details?.size?.pos_code || item.pos_code || null,
-            ref_code: item.details?.size?.ref_code || item.ref_code || '',
-            selected_toppings: (item.details?.customizations || []).map(c => ({
-              id: c.item_id || c.id,
-              name: c.item_name || c.name,
-              price: parseFloat(c.price || 0),
-              pos_code: c.pos_code || '',
-              quantity: c.quantity !== undefined ? c.quantity : 1,
-              ref_code: c.ref_code || ''
-            }))
-          }
-        };
-      }
-    });
-    return transformed;
-  };
-
-  const handleSubmit = async () => {
-    if (loading) return;
-    if (!entries || !entries.length) return;
-
-    setLoading(true);
-
-    try {
-      const transformedCart = transformCartItems(cartItems);
-
-      const payload = {
-        company_id: customerInfo?.company_id || selectedBranch?.company_id,
-        branch_id: selectedBranch?.id,
-        username: customerInfo?.username || customerInfo?.name || 'Guest',
-        email: customerInfo?.email || '',
-        employee_id: customerInfo?.employee_id,
-        order_info: {
-          cart: transformedCart,
-          orderType: orderDetails?.orderType || "Delivery",
-          paymentMethod: 'Cash',
-          customerInfo: customerInfo
-        }
-      };
-
-      const response = await axios.post(
-        `${Config.BASE_URL}/orders`,
-        payload
-      );
-
-      clearCart();
-      navigation.navigate('OrderSuccess', { apiData: response.data || null });
-    } catch (err) {
-      console.error('Order Placement Error:', err);
-      const apiMessage = getErrorMessage(err, 'An error occurred while placing the order.');
-      Alert.alert('Error', apiMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const toggleDetails = key => {
     setShowDetails(prev => ({ ...prev, [key]: !prev[key] }));
   };
@@ -303,7 +219,8 @@ export function Cart() {
     (sum, item) => sum + item.price * (quantities[item.key] || item.quantity),
     0
   );
-  const total = subtotal;
+  const deliveryFee = orderDetails?.orderType === 'Delivery' ? Number(selectedBranch?.delivery_charges) || 0 : 0;
+  const total = subtotal + deliveryFee;
 
   if (entries.length === 0) {
     return (

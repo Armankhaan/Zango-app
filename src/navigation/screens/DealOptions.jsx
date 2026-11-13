@@ -1,3 +1,4 @@
+import { dealSelectionCodes, itemCodes } from '../../utils/orderPayload';
 import React, { useContext, useState, useEffect, useMemo } from 'react';
 import {
   View,
@@ -493,8 +494,8 @@ export function DealOptions() {
           }
         });
       } else {
-        if (item.extra_price) {
-          calc += parseFloat(item.extra_price);
+        if (Number(item.extra_price) > 0) {
+          calc += Number(item.extra_price);
         }
         // Add topping charges for regular items
         const toppings = selectedToppings[slotId];
@@ -650,7 +651,7 @@ export function DealOptions() {
                 item_name: t.name,
                 price: 0,
                 quantity: -1,
-                pos_code: t.pos_code || t.ref_code || '',
+                pos_code: t.pos_code || '',
                 ref_code: t.ref_code || ''
               };
             }
@@ -664,7 +665,7 @@ export function DealOptions() {
               item_name: t.name,
               price: 170 * (qty - 1),
               quantity: qty,
-              pos_code: t.pos_code || t.ref_code || '',
+              pos_code: t.pos_code || '',
               ref_code: t.ref_code || ''
             };
           } else {
@@ -681,7 +682,7 @@ export function DealOptions() {
               item_name: t.name,
               price: toppingPrice * qty,
               quantity: qty,
-              pos_code: t.pos_code || t.ref_code || '',
+              pos_code: t.pos_code || '',
               ref_code: t.ref_code || ''
             };
           }
@@ -821,10 +822,12 @@ export function DealOptions() {
       const crustItem = getSelectedCrustItem(prod);
       slotsWithToppings[slotId] = {
         id: prod.id,
-        name: prod.product?.name || prod.display_name,
-        price: parseFloat(prod.extra_price || 0),
-        ref_code: prod.ref_code || prod.product?.ref_code || crustItem?.ref_code || crustItem?.product?.ref_code || '',
-        pos_code: prod.pos_code || prod.product?.pos_code || crustItem?.pos_code || crustItem?.product?.pos_code || '',
+        name: prod.display_name || prod.product?.name,
+        price: Math.max(0, Number(prod.extra_price) || 0),
+        extra_price: Math.max(0, Number(prod.extra_price) || 0),
+        variant_items: (prod.variant_items || []).map(item => ({ id: item.id, name: item.name, ...itemCodes(item) })),
+        ref_code: dealSelectionCodes(prod).ref_code || crustItem?.ref_code || null,
+        pos_code: dealSelectionCodes(prod).pos_code || crustItem?.pos_code || null,
         crust: crustItem ? {
           variant_id: 'crust',
           variant_name: 'Crust',
@@ -834,7 +837,7 @@ export function DealOptions() {
           item_name: crustItem.name,
           price: 0,
           quantity: 1,
-          pos_code: crustItem.pos_code || crustItem.ref_code || '',
+          pos_code: crustItem.pos_code || '',
           ref_code: crustItem.ref_code || ''
         } : null,
         selected_toppings: Object.values(slotToppingsMap)
@@ -856,7 +859,7 @@ export function DealOptions() {
                   name: t.name,
                   price: 0,
                   quantity: -1,
-                  pos_code: t.pos_code || t.ref_code || '',
+                  pos_code: t.pos_code || '',
                   ref_code: t.ref_code || ''
                 };
               }
@@ -866,7 +869,7 @@ export function DealOptions() {
                 name: t.name,
                 price: 170 * (qty - 1),
                 quantity: qty,
-                pos_code: t.pos_code || t.ref_code || '',
+                pos_code: t.pos_code || '',
                 ref_code: t.ref_code || ''
               };
             } else {
@@ -878,7 +881,7 @@ export function DealOptions() {
                 name: t.name,
                 price: toppingPrice * qty,
                 quantity: qty,
-                pos_code: t.pos_code || t.ref_code || '',
+                pos_code: t.pos_code || '',
                 ref_code: t.ref_code || ''
               };
             }
@@ -889,12 +892,13 @@ export function DealOptions() {
 
     const cartKey = `deal-${id}-${JSON.stringify(slotsWithToppings)}`;
     const details = {
+      id, pos_code, ref_code,
       slots: slotsWithToppings,
       basePrice,
       quantity,
     };
     const unitPrice = quantity > 0 ? totalPrice / quantity : totalPrice;
-    addToCart(cartKey, unitPrice, name, image, pos_code || ref_code, details, quantity);
+    addToCart(cartKey, unitPrice, name, image, pos_code, details, quantity);
     navigation.goBack();
   };
 

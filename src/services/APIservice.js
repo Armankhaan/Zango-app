@@ -1,6 +1,6 @@
 // src/services/APIservice.js
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from './storage';
 import Config from '../constants/Config';
 
 export const apiClient = axios.create({
@@ -13,6 +13,7 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   async (config) => {
+    config.params = { ...config.params, company_id: Config.COMPANY_ID };
     try {
       const token = await AsyncStorage.getItem('krc_customer_token');
       if (token) {

@@ -1,6 +1,8 @@
-import React, { createContext, useState, useEffect } from 'react';
-import { Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useState, useEffect, useRef } from 'react';
+import { Platform, Alert } from 'react-native';
+import AsyncStorage from '../services/storage';
+import md5 from 'md5';
+import { isWithinStoreHours } from '../utils/store';
 import axios from 'axios';
 import * as Device from 'expo-device';
 import * as Application from 'expo-application';
@@ -9,11 +11,6 @@ import {
   getTradeAreas,
   resolveBranch,
   getCombinedMenu,
-  getCategories,
-  getProducts,
-  getProductDetails,
-  getDeals,
-  getDealDetails
 } from '../services/APIservice';
 import { apiClient } from '../services/APIservice';
 import Config from '../constants/Config';
@@ -33,165 +30,66 @@ const StoreContextProvider = ({ children }) => {
   const [selectedSubRegion, setSelectedSubRegion] = useState(null);
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [menuLoading, setMenuLoading] = useState(false);
+  const [menuError, setMenuError] = useState('');
+  const [locationError, setLocationError] = useState('');
+  const menuRequest = useRef(0);
 
   const [username, setUsername] = useState('');
   const [customerInfo, setCustomerInfo] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
   const [mapboxToken, setMapboxToken] = useState(null);
 
-  // Load saved data and initial trade areas on startup
+  const readJSON = async (key, fallback = null) => {
+    try { return JSON.parse(await AsyncStorage.getItem(key)) ?? fallback; }
+    catch { return fallback; }
+  };
+
+  const refreshLocations = async () => {
+    setLocationError('');
+    try {
+      const response = await getTradeAreas(Config.COMPANY_ID);
+      if (!response.status) throw new Error(response.message || 'Could not load Zango stores.');
+      const regions = (response.trade_areas || response.regions || []).filter(region => Number(region.company_id ?? Config.COMPANY_ID) === Config.COMPANY_ID);
+      setTradeAreas(regions);
+      setMapboxToken(response.mapbox_access_token || null);
+      return regions;
+    } catch (error) {
+      setLocationError('Could not load stores. Please check your connection and retry.');
+      throw error;
+    }
+  };
+
   useEffect(() => {
-    const initApp = async () => {
-      setLoading(true);
+    let active = true;
+    const initialize = async () => {
       try {
-        const safeGetItem = async (key) => {
-          try {
-            return await AsyncStorage.getItem(key);
-          } catch (e) {
-            console.warn(`Error reading key ${key} from AsyncStorage:`, e);
-            if (e.message && (e.message.includes('CursorWindow') || e.message.includes('too big'))) {
-              try {
-                await AsyncStorage.removeItem(key);
-              } catch (clearErr) {
-                console.warn(`Failed to clear oversized key ${key}:`, clearErr);
-              }
-            }
-            return null;
-          }
-        };
-
-        const [
-          cachedCart,
-          cachedMenuData,
-          savedCustomer,
-          savedUsername,
-          savedSubRegion,
-          savedBranch,
-          savedLocationTimestamp,
-          savedMapboxToken
-        ] = await Promise.all([
-          safeGetItem('cartItems'),
-          safeGetItem('menuData'),
-          safeGetItem('customerInfo'),
-          safeGetItem('username'),
-          safeGetItem('selectedSubRegion'),
-          safeGetItem('selectedBranch'),
-          safeGetItem('locationTimestamp'),
-          safeGetItem('mapboxToken')
+        const regions = await refreshLocations();
+        if (!active) return;
+        const [savedBranch, timestamp, customer, savedName, savedOrder, savedCart, savedArea] = await Promise.all([
+          readJSON('selectedBranch'), AsyncStorage.getItem('locationTimestamp'), readJSON('customerInfo'),
+          AsyncStorage.getItem('username'), readJSON('orderDetails'), readJSON('cartItems', {}), readJSON('selectedSubRegion'),
         ]);
-
-        if (cachedCart) setCartItems(JSON.parse(cachedCart));
-        if (savedMapboxToken && savedMapboxToken.trim() && savedMapboxToken !== 'null' && savedMapboxToken !== 'undefined') {
-          setMapboxToken(savedMapboxToken.trim());
+        if (!active) return;
+        if (customer) setCustomerInfo(customer);
+        if (savedName) setUsername(savedName);
+        const branches = regions.flatMap(region => (region.sub_regions || region.subRegions || []).map(area => area.branch).filter(Boolean));
+        const age = Date.now() - Number(timestamp || 0);
+        const restored = branches.find(branch => String(branch.id) === String(savedBranch?.id) && Number(branch.company_id) === Config.COMPANY_ID);
+        if (restored && age >= 0 && age < 12 * 60 * 60 * 1000) {
+          setSelectedBranch(restored);
+          setSelectedSubRegion(savedArea);
+          setOrderDetails(savedOrder?.orderType ? savedOrder : { orderType: 'Delivery' });
+          setCartItems(savedCart && !Array.isArray(savedCart) ? savedCart : {});
+          await fetchMenu(restored.id, Config.COMPANY_ID);
         } else {
-          setMapboxToken(null);
-          await AsyncStorage.removeItem('mapboxToken');
+          await Promise.all(['selectedBranch','selectedSubRegion','cartItems','menuData'].map(key => AsyncStorage.removeItem(key)));
         }
-        if (cachedMenuData) {
-          const parsed = JSON.parse(cachedMenuData);
-          setMenuData({
-            categories: parsed.categories || [],
-            deals: parsed.deals || [],
-            branch: parsed.branch || null
-          });
-        }
-        if (savedCustomer) setCustomerInfo(JSON.parse(savedCustomer));
-        if (savedUsername) setUsername(savedUsername);
-
-        if (savedSubRegion) setSelectedSubRegion(JSON.parse(savedSubRegion));
-
-        let isExpired = false;
-        if (savedLocationTimestamp) {
-          const hoursPassed = (Date.now() - parseInt(savedLocationTimestamp, 10)) / (1000 * 60 * 60);
-          if (hoursPassed > 12) isExpired = true;
-        }
-
-        let activeBranch = null;
-        if (savedBranch && !isExpired) {
-          try {
-            activeBranch = JSON.parse(savedBranch);
-            // If the cached branch belongs to a different company, clear it to prevent wrong branch loading
-            if (activeBranch && activeBranch.company_id !== Config.COMPANY_ID) {
-              activeBranch = null;
-              await AsyncStorage.removeItem('selectedBranch');
-              await AsyncStorage.removeItem('selectedSubRegion');
-              await AsyncStorage.removeItem('menuData');
-              setSelectedSubRegion(null);
-              setMenuData({ categories: [], deals: [], branch: null });
-            }
-          } catch (e) {
-            console.warn('Failed to parse saved branch', e);
-          }
-        }
-
-        if (!activeBranch && savedMapboxToken) {
-          try {
-            const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status === 'granted') {
-              const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-              const { latitude, longitude } = location.coords;
-              const resp = await apiClient.post(`/trade-areas/resolve-by-location`, { latitude, longitude });
-              if (resp.data && resp.data.status && resp.data.data) {
-                const data = resp.data.data;
-                if (data.branch) {
-                  activeBranch = data.branch;
-                  await AsyncStorage.setItem('selectedBranch', JSON.stringify(activeBranch));
-                  await AsyncStorage.setItem('locationTimestamp', Date.now().toString());
-                  if (data.trade_area) {
-                    setSelectedSubRegion(data.trade_area);
-                    await AsyncStorage.setItem('selectedSubRegion', JSON.stringify(data.trade_area));
-                  }
-                }
-              }
-            }
-          } catch (err) {
-            console.warn('Auto location failed:', err);
-          }
-        }
-
-        setSelectedBranch(activeBranch);
-
-        const compIdToUse = Config.COMPANY_ID;
-
-        // Each network call is isolated — a failure in one won't abort the others
-        // Menu fetch
-        if (activeBranch && activeBranch.id && compIdToUse) {
-          try {
-            await fetchMenu(activeBranch.id, compIdToUse);
-          } catch (e) {
-            console.warn('Menu fetch failed, app will use cached menu data:', e.message);
-          }
-        }
-
-        // Trade areas fetch
-        const activeCompId = Config.COMPANY_ID;
-        if (activeCompId) {
-          try {
-            const tradeAreasData = await getTradeAreas(activeCompId);
-            if (tradeAreasData && tradeAreasData.status) {
-              setTradeAreas(tradeAreasData.trade_areas);
-              const token = (tradeAreasData.mapbox_access_token || '').trim();
-              if (token && token !== 'null' && token !== 'undefined') {
-                setMapboxToken(token);
-                await AsyncStorage.setItem('mapboxToken', token);
-              } else {
-                setMapboxToken(null);
-                await AsyncStorage.removeItem('mapboxToken');
-              }
-            }
-          } catch (e) {
-            console.warn('Trade areas fetch failed, continuing without trade areas:', e.message);
-          }
-        }
-
-      } catch (e) {
-        console.warn('Failed to initialize app data:', e.message);
-      } finally {
-        setLoading(false);
-      }
+      } catch (error) { console.warn('Zango initialization:', error.message); }
+      finally { if (active) setLoading(false); }
     };
-
-    initApp();
+    initialize();
+    return () => { active = false; menuRequest.current += 1; };
   }, []);
 
   const loginUser = async (id, password) => {
@@ -214,6 +112,7 @@ const StoreContextProvider = ({ children }) => {
 
     try {
       const payload = {
+        company_id: Config.COMPANY_ID,
         username: id,
         password: password,
         deviceId: deviceId,
@@ -225,6 +124,7 @@ const StoreContextProvider = ({ children }) => {
 
       if (response.data && response.data.status) {
         const user = response.data.user;
+        if (Number(user.company_id) !== Config.COMPANY_ID) return { success: false, message: 'This account does not belong to Zango.' };
         const userInfo = {
           id: user.id,
           name: user.username,
@@ -257,7 +157,7 @@ const StoreContextProvider = ({ children }) => {
         // Dynamically fetch trade areas for the user's company
         if (user.company_id) {
           try {
-            const tradeAreasData = await getTradeAreas(user.company_id);
+            const tradeAreasData = await getTradeAreas(Config.COMPANY_ID);
             if (tradeAreasData && tradeAreasData.status) {
               setTradeAreas(tradeAreasData.trade_areas);
             }
@@ -279,146 +179,51 @@ const StoreContextProvider = ({ children }) => {
     }
   };
 
-  /**
-   * Slim down a category list for safe AsyncStorage caching.
-   */
-  const slimCategories = (categories = []) =>
-    categories.map(cat => ({
-      ...cat,
-      products: (cat.products || []).map(p => ({
-        id: p.id,
-        name: p.name,
-        price: p.price,
-        image: p.image,
-        description: p.description,
-        pos_code: p.pos_code,
-        ref_code: p.ref_code,
-        product_type: p.product_type,
-      })),
-    }));
-
-  const fetchMenu = async (branchId, companyId) => {
+  const fetchMenu = async (branchId) => {
+    if (!branchId) return;
+    const requestId = ++menuRequest.current;
+    setMenuLoading(true);
+    setMenuError('');
+    setMenuData({ categories: [], deals: [], branch: null });
     try {
-      if (!branchId || !companyId) return;
-
-      // 1. Fetch Deals
-      let dealsList = [];
-      try {
-        const dealsRes = await getDeals(companyId, branchId);
-        dealsList = dealsRes?.data?.deals || dealsRes?.deals || [];
-      } catch (err) {
-        console.error('Error fetching deals:', err);
-      }
-
-      const fullDeals = dealsList;
-
-      // 3. Fetch Categories
-      let categoriesList = [];
-      try {
-        const categoriesRes = await getCategories(companyId, branchId);
-        categoriesList = categoriesRes?.data?.categories || categoriesRes?.categories || [];
-      } catch (err) {
-        console.error('Error fetching categories:', err);
-      }
-
-      // 4. Fetch Products for each category
-      const fullCategories = await Promise.all(
-        categoriesList.map(async (category) => {
-          try {
-            const productsRes = await getProducts(companyId, branchId, category.id);
-            const productsList = productsRes?.data?.products || productsRes?.products || [];
-
-            return {
-              ...category,
-              products: productsList
-            };
-          } catch (err) {
-            console.error('Error fetching products for category', category.id, err);
-            return { ...category, products: [] };
-          }
-        })
-      );
-
-      let branch = null;
-      try {
-        const savedBranch = await AsyncStorage.getItem('selectedBranch');
-        if (savedBranch) {
-          branch = JSON.parse(savedBranch);
-        }
-      } catch (e) { }
-      if (!branch) {
-        branch = { id: branchId, company_id: companyId };
-      }
-
-      setMenuData({ categories: fullCategories, deals: fullDeals, branch });
-
-      try {
-        const cachePayload = JSON.stringify({
-          categories: slimCategories(fullCategories),
-          deals: fullDeals.map(d => ({
-            id: d.id,
-            name: d.name,
-            price: d.price,
-            image: d.image,
-            ref_code: d.ref_code,
-            pos_code: d.pos_code,
-          })),
-          branch,
-        });
-        if (cachePayload.length < 1_500_000) {
-          await AsyncStorage.setItem('menuData', cachePayload);
-        } else {
-          console.warn('menuData cache skipped — payload too large for AsyncStorage:', cachePayload.length, 'bytes');
-          await AsyncStorage.removeItem('menuData');
-        }
-      } catch (e) {
-        console.warn('Failed to save menuData cache:', e.message);
-      }
+      const response = await getCombinedMenu(Config.COMPANY_ID, branchId);
+      if (requestId !== menuRequest.current) return;
+      if (!response.status) throw new Error(response.message || 'Menu unavailable.');
+      const menu = response.menu || {};
+      if (!menu.branch || Number(menu.branch.company_id) !== Config.COMPANY_ID) throw new Error('This store is not a Zango store.');
+      setMenuData({ categories: menu.categories || [], deals: menu.deals || [], branch: menu.branch });
+      setSelectedBranch(previous => ({ ...previous, ...menu.branch }));
     } catch (error) {
-      console.error('Error fetching menu for branch:', branchId, error.message);
+      if (requestId === menuRequest.current) setMenuError('Could not load the menu. Please try again.');
       throw error;
-    }
+    } finally { if (requestId === menuRequest.current) setMenuLoading(false); }
   };
 
-  const handleSelectSubRegion = async (subRegion) => {
-    setLoading(true);
-    try {
-      setCartItems({});
-      await AsyncStorage.removeItem('cartItems');
-      setSelectedSubRegion(subRegion);
-      await AsyncStorage.setItem('selectedSubRegion', JSON.stringify(subRegion));
-
-      const branchResponse = await resolveBranch(subRegion.id);
-      if (branchResponse.status) {
-        const branch = branchResponse.data.branch;
-        setSelectedBranch(branch);
-        await AsyncStorage.setItem('selectedBranch', JSON.stringify(branch));
-        await AsyncStorage.setItem('locationTimestamp', Date.now().toString());
-
-        await fetchMenu(branch.id, Config.COMPANY_ID);
-      }
-    } catch (error) {
-      console.error("Error resolving branch for sub-region:", subRegion.id, error);
-    } finally {
-      setLoading(false);
-    }
+  const selectStore = async (branch, subRegion = null) => {
+    if (!branch?.id || Number(branch.company_id) !== Config.COMPANY_ID) throw new Error('Please choose a valid Zango store.');
+    const known = tradeAreas.flatMap(region => (region.sub_regions || region.subRegions || []).map(area => area.branch?.id));
+    if (!known.some(id => String(id) === String(branch.id))) throw new Error('This Zango store is no longer available.');
+    if (selectedBranch && String(selectedBranch.id) !== String(branch.id)) clearCart();
+    menuRequest.current += 1;
+    setSelectedBranch(branch);
+    setSelectedSubRegion(subRegion);
+    await Promise.all([
+      AsyncStorage.setItem('selectedBranch', JSON.stringify(branch)),
+      AsyncStorage.setItem('locationTimestamp', String(Date.now())),
+      AsyncStorage.setItem('selectedSubRegion', JSON.stringify(subRegion)),
+    ]);
+    // Keep a valid selection even if its menu is temporarily unavailable; the menu has retry.
+    try { await fetchMenu(branch.id); } catch { /* Display menuError on the menu screen. */ }
+    return true;
   };
 
-  const handleSelectBranch = async (branch) => {
-    setLoading(true);
-    try {
-      setCartItems({});
-      await AsyncStorage.removeItem('cartItems');
-      setSelectedBranch(branch);
-      await AsyncStorage.setItem('selectedBranch', JSON.stringify(branch));
-      await AsyncStorage.setItem('locationTimestamp', Date.now().toString());
-      await fetchMenu(branch.id, branch.company_id);
-    } catch (error) {
-      console.error("Error setting branch directly:", error);
-    } finally {
-      setLoading(false);
-    }
+  const handleSelectSubRegion = async subRegion => {
+    const response = await resolveBranch(subRegion.id);
+    if (!response.status) throw new Error(response.message || 'Delivery is unavailable in this area.');
+    return selectStore(response.data?.branch || response.branch, subRegion);
   };
+
+  const handleSelectBranch = branch => selectStore(branch);
 
   const persistCart = async (items) => {
     try {
@@ -429,6 +234,8 @@ const StoreContextProvider = ({ children }) => {
   };
 
   const addToCart = (key, price, name, image, pos_code, details, quantity = 1, options = {}) => {
+    if (key.length > 120) key = `${key.startsWith('deal-') ? key.split('-').slice(0,2).join('-') : key.split('-')[0]}-${md5(key)}`;
+    if (!isWithinStoreHours(selectedBranch)) { Alert.alert('Store closed', 'Please order when this store reopens.'); return; }
     setCartItems(prev => {
       const existing = prev[key];
       const newQty = existing ? existing.quantity + quantity : quantity;
@@ -470,7 +277,7 @@ const StoreContextProvider = ({ children }) => {
   
   const requestOtp = async (email) => {
     try {
-      const company_id = Config.COMPANY_ID || selectedBranch?.company_id || 1;
+      const company_id = Config.COMPANY_ID;
       const response = await apiClient.post('/customer/request-otp', {
         company_id,
         email
@@ -483,7 +290,7 @@ const StoreContextProvider = ({ children }) => {
 
   const verifyOtpAndLogin = async (data) => {
     try {
-      const company_id = Config.COMPANY_ID || selectedBranch?.company_id || 1;
+      const company_id = Config.COMPANY_ID;
       const response = await apiClient.post('/customer/verify-otp', {
         company_id,
         ...data
@@ -518,6 +325,7 @@ const StoreContextProvider = ({ children }) => {
 
   const updateOrderDetails = (details) => {
     setOrderDetails(details);
+    AsyncStorage.setItem('orderDetails', JSON.stringify(details)).catch(() => {});
   };
 
   const clearCustomerInfo = async () => {
@@ -541,6 +349,11 @@ const StoreContextProvider = ({ children }) => {
         cartItems,
         menuData,
         loading,
+        menuLoading,
+        menuError,
+        locationError,
+        refreshLocations,
+        isBranchOpen: () => isWithinStoreHours(selectedBranch),
         tradeAreas,
         selectedSubRegion,
         selectedBranch,

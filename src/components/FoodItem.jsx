@@ -58,6 +58,7 @@ const FoodItem = (props) => {
 
   return (
     <TouchableOpacity
+      accessibilityRole="button" accessibilityLabel={`View ${name}`}
       style={styles.card}
       onPress={handleNavigate}
       disabled={loading}
@@ -80,14 +81,15 @@ const FoodItem = (props) => {
           <View style={[styles.itemImage, styles.placeholder]} />
         )}
         <TouchableOpacity
+          accessibilityRole="button" accessibilityLabel={`Customize ${name}`}
           style={styles.addBtn}
-          onPress={handleNavigate}
+          onPress={event => { event.stopPropagation(); handleNavigate(); }}
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color="#181818" />
           ) : (
-            <Plus size={18} color="#fff" strokeWidth={3} />
+            <Plus size={18} color="#181818" strokeWidth={3} />
           )}
         </TouchableOpacity>
       </View>
@@ -100,8 +102,11 @@ function getStyles(theme) {
     card: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 16,
-      borderBottomWidth: 1,
+      padding: 16,
+      marginBottom:12,
+      backgroundColor:theme.colors.card,
+      borderRadius:12,
+      borderWidth: 1,
       borderBottomColor: theme.colors.border || '#EEE',
     },
     textSection: {

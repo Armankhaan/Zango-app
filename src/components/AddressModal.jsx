@@ -30,12 +30,14 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
   );
   const [addressText, setAddressText] = useState(defaultAddress);
   const [coordinates, setCoordinates] = useState({ lat: 31.5204, lng: 74.3587 });
+  const [hasChosenCoordinates, setHasChosenCoordinates] = useState(false);
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
   const webviewRef = useRef(null);
 
   useEffect(() => {
     if (visible) {
       setAddressText(defaultAddress);
+      setHasChosenCoordinates(false);
     }
   }, [visible, defaultAddress]);
 
@@ -65,6 +67,7 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
       const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       const { latitude, longitude } = location.coords;
       setCoordinates({ lat: latitude, lng: longitude });
+      setHasChosenCoordinates(true);
       fetchAddressFromCoords(latitude, longitude);
       
       // Tell webview to move map
@@ -89,6 +92,7 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
       if (data.type === 'MARKER_MOVED') {
         const { lat, lng } = data;
         setCoordinates({ lat, lng });
+        setHasChosenCoordinates(true);
         fetchAddressFromCoords(lat, lng);
       }
     } catch (e) {
@@ -121,7 +125,7 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
             zoom: 15
           });
 
-          var marker = new mapboxgl.Marker({ draggable: true, color: '#FF6600' })
+          var marker = new mapboxgl.Marker({ draggable: true, color: '#FF5C00' })
             .setLngLat([${coordinates.lng}, ${coordinates.lat}])
             .addTo(map);
 
@@ -157,7 +161,7 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
   const isLight = !theme?.dark;
   const cardBg = isLight ? '#FFFFFF' : '#1E1E1E';
   const borderColor = isLight ? '#E0E0E0' : '#333333';
-  const ORANGE = '#FF6600';
+  const ORANGE = '#FF5C00';
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true}>
@@ -222,10 +226,11 @@ const AddressModal = ({ visible, onClose, onSave, defaultAddress = '', regionNam
 
           <TouchableOpacity
             style={[styles.saveBtn, { backgroundColor: ORANGE, marginBottom: Math.max(insets.bottom, Platform.OS === 'android' ? 24 : 16) }]}
+            disabled={!addressText.trim()}
             onPress={() => onSave({
               address: addressText,
-              latitude: coordinates.lat,
-              longitude: coordinates.lng,
+              latitude: hasChosenCoordinates ? coordinates.lat : null,
+              longitude: hasChosenCoordinates ? coordinates.lng : null,
               regionName
             })}
           >

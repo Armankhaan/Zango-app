@@ -665,7 +665,7 @@ export function ItemOptions({ route }) {
                     item_name: selectedFirstHalf.name,
                     price: firstPrice,
                     quantity: 0.5,
-                    pos_code: selectedFirstHalf.pos_code || selectedFirstHalf.ref_code || '',
+                    pos_code: selectedFirstHalf.pos_code || '',
                     ref_code: selectedFirstHalf.ref_code || ''
                 });
                 // Prepare final selections for first half (including any default toppings from crust)
@@ -682,7 +682,7 @@ export function ItemOptions({ route }) {
                         item_name: selectedFirstHalfCrust.name,
                         price: firstPrice,
                         quantity: 0.5,
-                        pos_code: selectedFirstHalfCrust.pos_code || selectedFirstHalfCrust.ref_code || '',
+                        pos_code: selectedFirstHalfCrust.pos_code || '',
                         ref_code: selectedFirstHalfCrust.ref_code || ''
                     });
 
@@ -710,7 +710,7 @@ export function ItemOptions({ route }) {
                             item_id: selItem.id,
                             item_name: selItem.name,
                             quantity: selItem.quantity === -1 ? -1 : (selItem.quantity || 1),
-                            pos_code: selItem.pos_code || selItem.ref_code || '',
+                            pos_code: selItem.pos_code || '',
                             ref_code: selItem.ref_code || ''
                         });
                     });
@@ -731,7 +731,7 @@ export function ItemOptions({ route }) {
                     item_name: selectedSecondHalf.name,
                     price: secondPrice,
                     quantity: 0.5,
-                    pos_code: selectedSecondHalf.pos_code || selectedSecondHalf.ref_code || '',
+                    pos_code: selectedSecondHalf.pos_code || '',
                     ref_code: selectedSecondHalf.ref_code || ''
                 });
 
@@ -745,7 +745,7 @@ export function ItemOptions({ route }) {
                         item_name: selectedSecondHalfCrust.name,
                         price: secondPrice,
                         quantity: 0.5,
-                        pos_code: selectedSecondHalfCrust.pos_code || selectedSecondHalfCrust.ref_code || '',
+                        pos_code: selectedSecondHalfCrust.pos_code || '',
                         ref_code: selectedSecondHalfCrust.ref_code || ''
                     });
 
@@ -773,7 +773,7 @@ export function ItemOptions({ route }) {
                             item_id: selItem.id,
                             item_name: selItem.name,
                             price: parseFloat(selItem.price || 0),
-                            pos_code: selItem.pos_code || selItem.ref_code || '',
+                            pos_code: selItem.pos_code || '',
                             ref_code: selItem.ref_code || '',
                             quantity: selItem.quantity === -1 ? -1 : (selItem.quantity || 1),
                         });
@@ -805,7 +805,7 @@ export function ItemOptions({ route }) {
                             item_name: t.name,
                             price: 0,
                             quantity: -1,
-                            pos_code: t.pos_code || t.ref_code || '',
+                            pos_code: t.pos_code || '',
                             ref_code: t.ref_code || ''
                         };
                     }
@@ -819,7 +819,7 @@ export function ItemOptions({ route }) {
                         item_name: t.name,
                         price: 170 * (qty - 1),
                         quantity: qty,
-                        pos_code: t.pos_code || t.ref_code || '',
+                        pos_code: t.pos_code || '',
                         ref_code: t.ref_code || ''
                     };
                 } else {
@@ -836,7 +836,7 @@ export function ItemOptions({ route }) {
                         item_name: t.name,
                         price: toppingPrice * qty,
                         quantity: qty,
-                        pos_code: t.pos_code || t.ref_code || '',
+                        pos_code: t.pos_code || '',
                         ref_code: t.ref_code || ''
                     };
                 }
@@ -857,7 +857,7 @@ export function ItemOptions({ route }) {
             const sizeVar2 = selectedSecondHalf?.variants?.find(v => v.name.toLowerCase().includes('size'));
             const sizeOpt2 = (mainSizeName && matchSizeOption(sizeVar2?.options, mainSizeName)) || sizeVar2?.options?.[0];
 
-            const itemPosCode = pos_code || ref_code || product.pos_code || product.ref_code || product.product?.pos_code || product.product?.ref_code || selectedSizeOption?.pos_code || selectedSizeOption?.ref_code || sizeOpt1?.pos_code || sizeOpt2?.pos_code || null;
+            const itemPosCode = pos_code || ref_code || product.pos_code || product.product?.pos_code || selectedSizeOption?.pos_code || sizeOpt1?.pos_code || sizeOpt2?.pos_code || null;
             const itemRefCode = ref_code || product.ref_code || product.product?.ref_code || selectedSizeOption?.ref_code || sizeOpt1?.ref_code || sizeOpt2?.ref_code || '';
 
             const firstHalfDetail = {
@@ -870,7 +870,7 @@ export function ItemOptions({ route }) {
                     item_name: selectedFirstHalf.name,
                     price: firstPrice,
                     quantity: 0.5,
-                    pos_code: selectedFirstHalf.pos_code || selectedFirstHalf.ref_code || selectedFirstHalf.product?.pos_code || selectedFirstHalf.product?.ref_code || sizeOpt1?.pos_code || '',
+                    pos_code: selectedFirstHalf.pos_code || selectedFirstHalf.product?.pos_code || sizeOpt1?.pos_code || '',
                     ref_code: selectedFirstHalf.ref_code || selectedFirstHalf.product?.ref_code || sizeOpt1?.ref_code || ''
                 },
                 crust: selectedFirstHalfCrust ? {
@@ -882,7 +882,7 @@ export function ItemOptions({ route }) {
                     item_name: selectedFirstHalfCrust.name,
                     price: firstPrice,
                     quantity: 0.5,
-                    pos_code: selectedFirstHalfCrust.pos_code || selectedFirstHalfCrust.ref_code || selectedFirstHalfCrust.pos_number || sizeOpt1?.pos_code || '',
+                    pos_code: selectedFirstHalfCrust.pos_code || selectedFirstHalfCrust.pos_number || sizeOpt1?.pos_code || '',
                     ref_code: selectedFirstHalfCrust.ref_code || sizeOpt1?.ref_code || ''
                 } : null,
                 toppings: fToppings
@@ -898,7 +898,7 @@ export function ItemOptions({ route }) {
                     item_name: selectedSecondHalf.name,
                     price: secondPrice,
                     quantity: 0.5,
-                    pos_code: selectedSecondHalf.pos_code || selectedSecondHalf.ref_code || selectedSecondHalf.product?.pos_code || selectedSecondHalf.product?.ref_code || sizeOpt2?.pos_code || '',
+                    pos_code: selectedSecondHalf.pos_code || selectedSecondHalf.product?.pos_code || sizeOpt2?.pos_code || '',
                     ref_code: selectedSecondHalf.ref_code || selectedSecondHalf.product?.ref_code || sizeOpt2?.ref_code || ''
                 },
                 crust: selectedSecondHalfCrust ? {
@@ -910,7 +910,7 @@ export function ItemOptions({ route }) {
                     item_name: selectedSecondHalfCrust.name,
                     price: secondPrice,
                     quantity: 0.5,
-                    pos_code: selectedSecondHalfCrust.pos_code || selectedSecondHalfCrust.ref_code || selectedSecondHalfCrust.pos_number || sizeOpt2?.pos_code || '',
+                    pos_code: selectedSecondHalfCrust.pos_code || selectedSecondHalfCrust.pos_number || sizeOpt2?.pos_code || '',
                     ref_code: selectedSecondHalfCrust.ref_code || sizeOpt2?.ref_code || ''
                 } : null,
                 toppings: sToppings
@@ -1013,7 +1013,7 @@ export function ItemOptions({ route }) {
                             item_name: selItem.name,
                             price: 0,
                             quantity: -1,
-                            pos_code: selItem.pos_code || selItem.ref_code || '',
+                            pos_code: selItem.pos_code || '',
                             ref_code: selItem.ref_code || ''
                         });
                         return;
@@ -1028,7 +1028,7 @@ export function ItemOptions({ route }) {
                         item_name: selItem.name,
                         price: 170 * (nestedQty - 1),
                         quantity: nestedQty,
-                        pos_code: selItem.pos_code || selItem.ref_code || '',
+                        pos_code: selItem.pos_code || '',
                         ref_code: selItem.ref_code || ''
                     });
                     return;
@@ -1046,7 +1046,7 @@ export function ItemOptions({ route }) {
                         item_name: selItem.name,
                         price: nestedPrice * nestedQty,
                         quantity: nestedQty,
-                        pos_code: selItem.pos_code || selItem.ref_code || '',
+                        pos_code: selItem.pos_code || '',
                         ref_code: selItem.ref_code || ''
                     });
                     return;
@@ -1061,7 +1061,7 @@ export function ItemOptions({ route }) {
                         item_name: selItem.name,
                         price: nestedPrice * nestedQty,
                         quantity: nestedQty,
-                        pos_code: selItem.pos_code || selItem.ref_code || '',
+                        pos_code: selItem.pos_code || '',
                         ref_code: selItem.ref_code || ''
                     });
                     return;
@@ -1094,7 +1094,7 @@ export function ItemOptions({ route }) {
                             item_name: selItem.name || selItem.title || selItem.product_name,
                             price: 0,
                             quantity: -1,
-                            pos_code: selItem.pos_code || selItem.ref_code || option.pos_code || option.ref_code || variant.pos_code || variant.ref_code || '',
+                            pos_code: selItem.pos_code || option.pos_code || variant.pos_code || '',
                             ref_code: selItem.ref_code || option.ref_code || variant.ref_code || ''
                         });
                         return;
@@ -1109,7 +1109,7 @@ export function ItemOptions({ route }) {
                         item_name: selItem.name || selItem.title || selItem.product_name,
                         price: 170 * (itemQty - 1),
                         quantity: itemQty,
-                        pos_code: selItem.pos_code || selItem.ref_code || option.pos_code || option.ref_code || variant.pos_code || variant.ref_code || '',
+                        pos_code: selItem.pos_code || option.pos_code || variant.pos_code || '',
                         ref_code: selItem.ref_code || option.ref_code || variant.ref_code || ''
                     });
                     return;
@@ -1126,7 +1126,7 @@ export function ItemOptions({ route }) {
                         item_name: selItem.name || selItem.title || selItem.product_name,
                         price: itemPrice * itemQty,
                         quantity: itemQty,
-                        pos_code: selItem.pos_code || selItem.ref_code || option.pos_code || option.ref_code || variant.pos_code || variant.ref_code || '',
+                        pos_code: selItem.pos_code || option.pos_code || variant.pos_code || '',
                         ref_code: selItem.ref_code || option.ref_code || variant.ref_code || ''
                     });
                     return;
@@ -1140,7 +1140,7 @@ export function ItemOptions({ route }) {
                         item_name: selItem.name || selItem.title || selItem.product_name,
                         price: isSize ? itemPrice : (itemPrice * itemQty),
                         quantity: itemQty,
-                        pos_code: selItem.pos_code || selItem.ref_code || option.pos_code || option.ref_code || variant.pos_code || variant.ref_code || '',
+                        pos_code: selItem.pos_code || option.pos_code || variant.pos_code || '',
                         ref_code: selItem.ref_code || option.ref_code || variant.ref_code || ''
                     };
 
@@ -1154,13 +1154,14 @@ export function ItemOptions({ route }) {
         });
 
         const details = {
+            id, pos_code, ref_code,
             basePrice: price,
             size: sizeSelection,
             customizations: customizationsSelections
         };
         const cartKey = `${id}-${JSON.stringify(details)}`;
         const unitPrice = quantity > 0 ? totalPrice / quantity : totalPrice;
-        addToCart(cartKey, unitPrice, name, image, product.pos_code || ref_code, details, quantity);
+        addToCart(cartKey, unitPrice, name, image, product.pos_code, details, quantity);
         navigation.goBack();
     };
 

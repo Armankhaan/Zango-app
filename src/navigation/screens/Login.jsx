@@ -13,6 +13,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { StoreContext } from '../../context/StoreContext';
 import { ThemeContext } from '../../context/ThemeContext';
@@ -113,10 +114,10 @@ export const Login = () => {
 
             <View style={styles.logoSection}>
               <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
-              <Text style={styles.tagline}>Your way Everyday!</Text>
+              <Text style={styles.tagline}>FUEL YOUR DAY IN A ZANGO WAY</Text>
             </View>
 
-            <View style={styles.formSection}>
+            <ScrollView keyboardShouldPersistTaps="handled" style={styles.formSection}>
               {step === 1 ? (
                 <>
                   <Text style={styles.title}>Enter Email</Text>
@@ -197,7 +198,7 @@ export const Login = () => {
                   </TouchableOpacity>
                 </>
               )}
-            </View>
+            </ScrollView>
           </View>
         </View>
       </TouchableWithoutFeedback>
@@ -209,12 +210,12 @@ export const Login = () => {
 export default Login;
 
 const styles = StyleSheet.create({
-  overlayContainer: { flex: 1, backgroundColor: 'rgba(230, 81, 0, 0.85)' },
+  overlayContainer: { flex: 1, backgroundColor: 'rgba(24, 24, 24, 0.75)' },
   wrapper: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { flex: 1 },
   sheetContainer: {
     backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    paddingHorizontal: 24, paddingTop: 28, paddingBottom: Platform.OS === 'ios' ? 44 : 32,
+    width: '100%', maxWidth: 520, maxHeight: '92%', alignSelf: 'center', paddingHorizontal: 24, paddingTop: 28, paddingBottom: Platform.OS === 'ios' ? 44 : 32,
     position: 'relative', elevation: 10,
   },
   closeBtn: { position: 'absolute', top: 16, right: 16, zIndex: 10, padding: 6 },
@@ -225,14 +226,14 @@ const styles = StyleSheet.create({
     height: 80,
     resizeMode: 'contain',
   },
-  tagline: { color: '#333333', fontSize: 13, fontWeight: '500', fontStyle: 'italic', marginTop: 2 },
+  tagline: { color: '#B94000', fontSize: 10, fontWeight: '800', letterSpacing: 1, textAlign: 'center', marginTop: 2 },
   formSection: { width: '100%' },
   title: { fontSize: 22, fontWeight: '800', color: '#000000', marginBottom: 4 },
   subtitle: { fontSize: 13, color: '#777777', marginBottom: 24, fontWeight: '400' },
   inputFieldBox: { borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8, marginBottom: 12 },
   inputLabel: { fontSize: 11, color: '#444444', fontWeight: '700', marginBottom: 2 },
   input: { fontSize: 15, color: '#000000', paddingVertical: 2, height: 36 },
-  loginBtn: { height: 52, backgroundColor: '#FF6600', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
+  loginBtn: { height: 52, backgroundColor: '#FF5C00', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
   btnDisabled: { opacity: 0.7 },
-  loginBtnText: { color: '#FFFFFF', fontSize: 17, fontWeight: '700' },
+  loginBtnText: { color: '#181818', fontSize: 17, fontWeight: '700' },
 });

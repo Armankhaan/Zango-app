@@ -35,7 +35,7 @@ export default function App() {
           {/* paint only the top notch/status-bar area */}
           <SafeAreaView
             edges={['top']}
-            style={{ backgroundColor: '#FF6600' }}
+            style={{ backgroundColor: '#181818' }}
           />
 
           {/* White status bar icons for orange header */}

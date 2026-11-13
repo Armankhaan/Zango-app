@@ -1,3 +1,5 @@
+import { appOrderInfo } from '../../utils/orderPayload';
+import { apiClient } from '../../services/APIservice';
 import React, { useContext, useState } from 'react';
 import {
   View,
@@ -22,7 +24,7 @@ import AddressModal from '../../components/AddressModal';
 export function Checkout() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const { cartItems, orderDetails, clearCart, selectedBranch, customerInfo, handleSelectBranch } = useContext(StoreContext);
+  const { cartItems, orderDetails, clearCart, selectedBranch, customerInfo, handleSelectBranch, isBranchOpen } = useContext(StoreContext);
   const { theme } = useContext(ThemeContext);
   const styles = getStyles(theme);
 
@@ -56,59 +58,14 @@ export function Checkout() {
     (sum, item) => sum + (parseFloat(item.price) || 0) * (item.quantity || 1),
     0
   );
-  const deliveryFee = orderDetails?.orderType === 'Pick-Up' ? 0 : 130;
-  // Inclusive Tax Math: total includes tax, so GST = subtotal * (16 / 116)
-  const tax = subtotal * (16 / 116);
+  const deliveryFee = orderDetails?.orderType === 'Delivery' ? Number(selectedBranch?.delivery_charges) || 0 : 0;
+  // Inclusive Tax Math: total includes tax, so GST = subtotal * ((Number(selectedBranch?.tax_percentage) || 0) / (100 + (Number(selectedBranch?.tax_percentage) || 0)))
+  const tax = subtotal * ((Number(selectedBranch?.tax_percentage) || 0) / (100 + (Number(selectedBranch?.tax_percentage) || 0)));
   const grandTotal = subtotal + deliveryFee;
 
-  const transformCartItems = (cart) => {
-    const transformed = {};
-    Object.keys(cart).forEach(key => {
-      const item = cart[key];
-      if (key.startsWith('deal-') || (item.details && item.details.slots)) {
-        transformed[key] = item;
-      } else if (item.details && (item.details.firstHalf || item.details.secondHalf)) {
-        const productIdStr = key.split('-')[0];
-        const productId = parseInt(productIdStr) || item.details?.id || 1;
-        transformed[key] = {
-          ...item,
-          details: {
-            id: productId,
-            name: item.name,
-            price: parseFloat(item.price || 0),
-            pos_code: item.pos_code || item.details?.pos_code || item.details?.size?.pos_code || null,
-            ref_code: item.ref_code || item.details?.ref_code || item.details?.size?.ref_code || '',
-            firstHalf: item.details.firstHalf,
-            secondHalf: item.details.secondHalf
-          }
-        };
-      } else {
-        const productIdStr = key.split('-')[0];
-        const productId = parseInt(productIdStr) || item.details?.size?.item_id || 1;
-        transformed[key] = {
-          ...item,
-          details: {
-            id: productId,
-            name: item.name,
-            price: parseFloat(item.details?.size?.price || 0),
-            pos_code: item.details?.size?.pos_code || item.pos_code || null,
-            ref_code: item.details?.size?.ref_code || item.ref_code || '',
-            selected_toppings: (item.details?.customizations || []).map(c => ({
-              id: c.item_id || c.id,
-              name: c.item_name || c.name,
-              price: parseFloat(c.price || 0),
-              pos_code: c.pos_code || '',
-              quantity: c.quantity !== undefined ? c.quantity : 1,
-              ref_code: c.ref_code || ''
-            }))
-          }
-        };
-      }
-    });
-    return transformed;
-  };
-
   const handlePlaceOrder = async () => {
+    if (!isBranchOpen()) return Alert.alert('Store closed', 'Please order when this store reopens.');
+    if (!Object.keys(cartItems).length) return Alert.alert('Your bag is empty', 'Add items before checking out.');
     if (!name.trim()) return Alert.alert('Required', 'Please enter your name.');
     if (!phone.trim()) return Alert.alert('Required', 'Please enter your phone number.');
     if (orderDetails?.orderType === 'Delivery' && !address.trim()) {
@@ -117,30 +74,16 @@ export function Checkout() {
 
     setLoading(true);
     try {
-      const transformedCart = transformCartItems(cartItems);
       const payload = {
-        company_id: Config.COMPANY_ID || 2,
+        company_id: Config.COMPANY_ID,
         branch_id: selectedBranch?.id,
         username: name,
         email: email,
-        order_info: {
-          cart: transformedCart,
-          orderType: orderDetails?.orderType || 'Delivery',
-          paymentMethod: paymentMethod === 'COD' ? 'Cash' : 'Card',
-          customerInfo: {
-            name,
-            phone,
-            email,
-            address,
-            latitude,
-            longitude,
-            instructions
-            },
-            source: 'zango'
-          }
+        order_info: appOrderInfo({cart:cartItems,orderType:orderDetails?.orderType || 'Delivery',paymentMethod:paymentMethod === 'COD' ? 'Cash' : 'Card',customerInfo:{name,phone,email,address,latitude,longitude},branch:selectedBranch,instructions:instructions})
       };
 
-      const response = await axios.post(`${Config.BASE_URL}/orders`, payload);
+      const response = await apiClient.post('/orders', payload);
+      if (!response.data?.order_id && !response.data?.status) throw new Error('The order was not accepted. Please try again.');
       clearCart();
       navigation.navigate('OrderSuccess', { apiData: response.data || null });
     } catch (err) {
@@ -307,7 +250,7 @@ export function Checkout() {
           </View>
           <View style={styles.divider} />
           <View style={styles.billRow}>
-            <Text style={styles.grandTotalLabel}>Grand Total <Text style={styles.inclusiveTaxLabel}>(Incl. 16% Tax)</Text></Text>
+            <Text style={styles.grandTotalLabel}>Grand Total <Text style={styles.inclusiveTaxLabel}>(Incl. {Number(selectedBranch?.tax_percentage) || 0}% Tax)</Text></Text>
             <Text style={styles.grandTotalVal}>Rs. {grandTotal.toFixed(2)}</Text>
           </View>
         </View>
@@ -336,7 +279,7 @@ export function Checkout() {
         onSave={async (data) => {
           try {
             if (data.latitude && data.longitude) {
-              const resp = await axios.post(`${Config.BASE_URL}/trade-areas/resolve-by-location`, {
+              const resp = await apiClient.post('/trade-areas/resolve-by-location', {
                 latitude: data.latitude,
                 longitude: data.longitude
               });
@@ -344,8 +287,8 @@ export function Checkout() {
               if (resp.data && resp.data.status && resp.data.data && resp.data.data.branch) {
                 const resolvedBranch = resp.data.data.branch;
                 if (!selectedBranch || selectedBranch.id !== resolvedBranch.id) {
-                  handleSelectBranch(resolvedBranch);
-                  Alert.alert('Branch Updated', `Delivering from ${resolvedBranch.name} now!`);
+                  Alert.alert('Different store', 'Please change your store first. Your bag may need to be rebuilt for that store.');
+                  return;
                 }
               }
             }
@@ -355,9 +298,7 @@ export function Checkout() {
             if (data.longitude) setLongitude(data.longitude);
             setIsAddressModalOpen(false);
           } catch (error) {
-            // Even if location verification is skipped/fails, accept manual address entry
-            setAddress(data.address);
-            setIsAddressModalOpen(false);
+            Alert.alert('Address unavailable', 'Could not verify your delivery area. Please try again.');
           }
         }}
       />

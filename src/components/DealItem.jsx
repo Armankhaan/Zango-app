@@ -57,6 +57,7 @@ const DealItem = (props) => {
 
   return (
     <TouchableOpacity
+      accessibilityRole="button" accessibilityLabel={`View ${name}`}
       style={styles.card}
       onPress={handleNavigateToModal}
       disabled={loading}
@@ -74,19 +75,20 @@ const DealItem = (props) => {
       {/* Right: Image + Add Button */}
       <View style={styles.imageSection}>
         <Image
-          source={image ? { uri: image } : require('../assets/dealsbanner.jpeg')}
+          source={image ? { uri: image } : require('../assets/logo.png')}
           style={styles.dealImage}
           resizeMode="cover"
         />
         <TouchableOpacity
+          accessibilityRole="button" accessibilityLabel={`Customize ${name}`}
           style={styles.addBtn}
-          onPress={handleNavigateToModal}
+          onPress={event => { event.stopPropagation(); handleNavigateToModal(); }}
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color="#181818" />
           ) : (
-            <Plus size={18} color="#fff" strokeWidth={3} />
+            <Plus size={18} color="#181818" strokeWidth={3} />
           )}
         </TouchableOpacity>
       </View>
@@ -99,8 +101,11 @@ function getStyles(theme) {
     card: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingVertical: 16,
-      borderBottomWidth: 1,
+      padding: 16,
+      marginBottom:12,
+      backgroundColor:theme.colors.card,
+      borderRadius:12,
+      borderWidth: 1,
       borderBottomColor: theme.colors.border || '#EEE',
     },
     textSection: {
