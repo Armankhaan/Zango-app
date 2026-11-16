@@ -15,10 +15,10 @@ test('clean deal JSON keeps included references and positive extras without char
       variant_items: [{ id: 1419, name: 'PAN', ref_code: '10371' }],
       selected_toppings: [{ id: 99, name: 'Cheese', ref_code: 'TOP', price: 51, quantity: 2 }] } },
   } } };
-  const info = appOrderInfo({ cart, branch: { delivery_charges: 80 }, customerInfo: { name: 'Test', access_token: 'must-not-leak' } });
+  const info = appOrderInfo({ cart, branch: { legacy_code: '00123', delivery_charges: 80 }, customerInfo: { name: 'Test', access_token: 'must-not-leak' } });
   assert.equal(info.subtotal, 4700);
   assert.equal(info.grand_total, 4780);
-  assert.equal(info.source, 'zango');
+  assert.equal(info.source, 'zango-app');
   const deal = info.cart['deal-70-key'];
   assert.equal(deal.details.extraPrice, 151);
   assert.equal(deal.details.slots[155].extra_price, 100);
@@ -37,7 +37,7 @@ test('half pizza fractions and removed default toppings retain their meaning', (
 });
 
 test('pick-up ignores delivery fees and keeps financial fields numeric', () => {
-  const info = appOrderInfo({cart:{a:{name:'Burger',price:'499.50',quantity:2,details:{ref_code:'10362'}}},orderType:'Pick-Up',branch:{delivery_charges:130}});
+  const info = appOrderInfo({cart:{a:{name:'Burger',price:'499.50',quantity:2,details:{ref_code:'10362'}}},orderType:'Pick-Up',branch:{legacy_code:'00123',delivery_charges:130}});
   assert.equal(info.delivery_fee, 0);
   assert.equal(info.grand_total, 999);
   assert.equal(info.cart.a.details.ref_code, '10362');
@@ -49,4 +49,12 @@ test('company validation and Pakistan overnight store hours reject stale/wrong s
   assert.equal(isCompanyBranch({ ...branch, company_id: 2 }, 10), false);
   assert.equal(isWithinStoreHours(branch, new Date('2026-11-13T22:00:00Z')), true);
   assert.equal(isWithinStoreHours(branch, new Date('2026-11-13T23:00:00Z')), false);
+});
+
+test('order JSON uses legacy store code and rejects missing branch mapping', () => {
+  const make = branch => appOrderInfo({ cart: {}, branch });
+  assert.equal(make({ legacy_code: '00123', store_code: '999', id: 42 }).store_code, '00123');
+  assert.equal(make({ store_code: '456' }).store_code, '456');
+  assert.equal(make({ branch_code: 0 }).store_code, '0');
+  assert.throws(() => make({ id: 42 }), /Store code is missing/);
 });

@@ -9,13 +9,16 @@ export function MyOrders() {
   const styles = getStyles(theme);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await apiClient.get('/customer/orders');
+        const res = await apiClient.get('/zango/customer/orders');
         setOrders(res.data || []);
       } catch (e) {
+        setError('Unable to load your orders. Please reopen this screen to try again.');
       } finally {
         setLoading(false);
       }
@@ -35,12 +38,13 @@ export function MyOrders() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>My Orders</Text>
+      {error ? <Text accessibilityRole="alert" style={styles.text}>{error}</Text> : null}
       {loading ? <ActivityIndicator size="large" color="#FF5C00" /> : (
         <FlatList
           data={orders}
           keyExtractor={item => item.id?.toString() || Math.random().toString()}
           renderItem={({item}) => (
-            <TouchableOpacity style={styles.card} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.card} activeOpacity={0.8} onPress={() => setExpandedId(expandedId === item.id ? null : item.id)} accessibilityRole="button" accessibilityLabel={`Order ${item.order_number}, view details`} accessibilityState={{ expanded: expandedId === item.id }}>
               <View style={styles.cardHeader}>
                 <View style={styles.orderNoWrap}>
                   <Package color="#FF5C00" size={20} />
@@ -54,8 +58,13 @@ export function MyOrders() {
               </View>
               <View style={styles.cardBody}>
                 <Text style={styles.date}>{new Date(item.created_at).toLocaleDateString()} {new Date(item.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Text>
-                <Text style={styles.price}>Rs. {item.order_info?.totals?.grand_total || item.order_info?.subtotal || item.order_info?.total || item.grand_total || '0'}</Text>
+                <Text style={styles.price}>Rs. {item.order_info?.grand_total ?? item.order_info?.totals?.grand_total ?? item.order_info?.subtotal ?? item.order_info?.total ?? item.grand_total ?? '0'}</Text>
               </View>
+              {item.forwarding_status !== 'sent' && <Text style={styles.text}>Store delivery unconfirmed. Contact the store with your order number.</Text>}
+              {expandedId === item.id && <View style={{ marginTop: 12 }}>
+                {Object.entries(item.order_info?.cart || {}).map(([key, entry]) => <Text key={key} style={{ color: theme.colors.text }}>{entry.quantity} × {entry.name}</Text>)}
+                <Text style={{ color: theme.colors.text }}>{item.order_info?.customerInfo?.address}</Text>
+              </View>}
             </TouchableOpacity>
           )}
           ListEmptyComponent={<Text style={styles.text}>You haven't placed any orders yet.</Text>}

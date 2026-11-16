@@ -192,7 +192,13 @@ const StoreContextProvider = ({ children }) => {
       const menu = response.menu || {};
       if (!menu.branch || Number(menu.branch.company_id) !== Config.COMPANY_ID) throw new Error('This store is not a Zango store.');
       setMenuData({ categories: menu.categories || [], deals: menu.deals || [], branch: menu.branch });
-      setSelectedBranch(previous => ({ ...previous, ...menu.branch }));
+      setSelectedBranch(previous => {
+        const merged = { ...previous, ...menu.branch };
+        for (const key of ['legacy_code', 'store_code', 'branch_code']) {
+          if (String(previous?.id) === String(menu.branch.id) && (merged[key] == null || String(merged[key]).trim() === '')) merged[key] = previous?.[key];
+        }
+        return merged;
+      });
     } catch (error) {
       if (requestId === menuRequest.current) setMenuError('Could not load the menu. Please try again.');
       throw error;

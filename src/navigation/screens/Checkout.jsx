@@ -1,3 +1,5 @@
+import { pendingZangoKey } from '../../utils/zangoOrderSubmission';
+import OrderStorage from '../../services/storage';
 import { appOrderInfo } from '../../utils/orderPayload';
 import { apiClient } from '../../services/APIservice';
 import React, { useContext, useState } from 'react';
@@ -74,22 +76,31 @@ export function Checkout() {
 
     setLoading(true);
     try {
+      let orderBranch = selectedBranch;
+      if (![orderBranch?.legacy_code, orderBranch?.store_code, orderBranch?.branch_code].some(code => code != null && String(code).trim() !== '')) {
+        const fresh = await apiClient.get('/trade-areas');
+        const areas = (fresh.data.trade_areas || fresh.data.regions || []).flatMap(region => region.sub_regions || region.subRegions || []);
+        const area = areas.find(area => String(area.branch?.id) === String(selectedBranch?.id));
+        if (area) orderBranch = { ...area.branch, store_code: area.branch.store_code || area.store_code || area.branch_code };
+      }
       const payload = {
         company_id: Config.COMPANY_ID,
         branch_id: selectedBranch?.id,
         username: name,
         email: email,
-        order_info: appOrderInfo({cart:cartItems,orderType:orderDetails?.orderType || 'Delivery',paymentMethod:paymentMethod === 'COD' ? 'Cash' : 'Card',customerInfo:{name,phone,email,address,latitude,longitude},branch:selectedBranch,instructions:instructions})
+        order_info: appOrderInfo({cart:cartItems,orderType:orderDetails?.orderType || 'Delivery',paymentMethod:paymentMethod === 'COD' ? 'Cash' : 'Card',customerInfo:{name,phone,email,address,latitude,longitude},branch:orderBranch,instructions:instructions})
       };
 
-      const response = await apiClient.post('/orders', payload);
-      if (!response.data?.order_id && !response.data?.status) throw new Error('The order was not accepted. Please try again.');
+      payload.idempotency_key = await pendingZangoKey(OrderStorage, payload);
+      const response = await apiClient.post('/zango/orders', payload, { timeout: 30000 });
+      if (response.data?.status !== true || response.data?.forwarding_status !== 'sent') throw new Error('The order was not accepted. Please try again.');
+      await OrderStorage.removeItem('zango_pending_order');
       clearCart();
       navigation.navigate('OrderSuccess', { apiData: response.data || null });
     } catch (err) {
       console.error('Order Placement Error:', err);
       const apiMessage = getErrorMessage(err, 'An error occurred while placing the order.');
-      Alert.alert('Error', apiMessage);
+      Alert.alert('Error', err.response?.data?.order_number ? `${apiMessage} Order: ${err.response.data.order_number}` : apiMessage);
     } finally {
       setLoading(false);
     }

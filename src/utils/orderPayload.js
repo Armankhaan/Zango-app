@@ -42,8 +42,15 @@ export function serializeAppCart(cart) {
     return [key,{key,name:item.name,price:positive(item.price),quantity:Math.max(1,number(item.quantity)),details:clean}];
   }));
 }
+function orderStoreCode(branch) {
+  const value = [branch?.legacy_code, branch?.store_code, branch?.branch_code]
+    .find(code => code !== null && code !== undefined && String(code).trim() !== '');
+  if (value === undefined) throw new Error('Store code is missing for the selected branch. Please select your branch again.');
+  return String(value).trim();
+}
+
 export function appOrderInfo({cart,orderType='Delivery',paymentMethod='Cash',customerInfo={},branch,instructions=''}) {
  const subtotal=round(Object.values(cart).reduce((sum,item)=>sum+positive(item.price)*Math.max(1,number(item.quantity)),0));
  const fee=orderType==='Delivery'?positive(branch?.delivery_charges):0;
- return {cart:serializeAppCart(cart),orderType,paymentMethod,customerInfo:{name:customerInfo.name || customerInfo.first_name || '',phone:customerInfo.phone || '',email:customerInfo.email || '',address:customerInfo.address || '',latitude:customerInfo.latitude ?? null,longitude:customerInfo.longitude ?? null},instructions,subtotal,delivery_fee:fee,grand_total:round(subtotal+fee),source:'zango'};
+ return {cart:serializeAppCart(cart),orderType,paymentMethod,customerInfo:{name:customerInfo.name || customerInfo.first_name || '',phone:customerInfo.phone || '',email:customerInfo.email || '',address:customerInfo.address || '',latitude:customerInfo.latitude ?? null,longitude:customerInfo.longitude ?? null},instructions,subtotal,delivery_fee:fee,grand_total:round(subtotal+fee),source:'zango-app',store_code:orderStoreCode(branch)};
 }
